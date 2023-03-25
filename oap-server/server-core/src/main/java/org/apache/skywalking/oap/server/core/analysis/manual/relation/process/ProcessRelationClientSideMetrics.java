@@ -28,11 +28,9 @@ import org.apache.skywalking.oap.server.core.analysis.metrics.Metrics;
 import org.apache.skywalking.oap.server.core.analysis.worker.MetricsStreamProcessor;
 import org.apache.skywalking.oap.server.core.remote.grpc.proto.RemoteData;
 import org.apache.skywalking.oap.server.core.source.DefaultScopeDefine;
-import org.apache.skywalking.oap.server.core.storage.ShardingAlgorithm;
 import org.apache.skywalking.oap.server.core.storage.StorageID;
 import org.apache.skywalking.oap.server.core.storage.annotation.BanyanDB;
 import org.apache.skywalking.oap.server.core.storage.annotation.Column;
-import org.apache.skywalking.oap.server.core.storage.annotation.SQLDatabase;
 import org.apache.skywalking.oap.server.core.storage.type.Convert2Entity;
 import org.apache.skywalking.oap.server.core.storage.type.Convert2Storage;
 import org.apache.skywalking.oap.server.core.storage.type.StorageBuilder;
@@ -44,7 +42,6 @@ import org.apache.skywalking.oap.server.core.storage.type.StorageBuilder;
     "entityId",
     "component_id"
 }, callSuper = true)
-@SQLDatabase.Sharding(shardingAlgorithm = ShardingAlgorithm.NO_SHARDING)
 public class ProcessRelationClientSideMetrics extends Metrics {
 
     public static final String INDEX_NAME = "process_relation_client_side";
@@ -86,7 +83,7 @@ public class ProcessRelationClientSideMetrics extends Metrics {
     @Override
     public boolean combine(Metrics metrics) {
         final ProcessRelationClientSideMetrics processRelationClientSideMetrics = (ProcessRelationClientSideMetrics) metrics;
-        if (!ComponentLibraryCatalogUtil.get().compare(this.componentId, processRelationClientSideMetrics.getComponentId())) {
+        if (ComponentLibraryCatalogUtil.get().compare(this.componentId, processRelationClientSideMetrics.getComponentId())) {
             this.setComponentId(processRelationClientSideMetrics.getComponentId());
             return true;
         }

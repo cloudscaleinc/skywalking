@@ -124,7 +124,7 @@ public enum Layer {
     MYSQL(18, true),
 
     /**
-     * Cache conjectured by client side plugin(eg. skywalking-java -> JedisPlugin LettucePlugin)
+     * Cache conjectured by client side plugin(eg. skywalking-java -&gt; JedisPlugin LettucePlugin)
      */
     VIRTUAL_CACHE(19, false),
 
@@ -141,7 +141,23 @@ public enum Layer {
     /**
      * EKS (Amazon Elastic Kubernetes Service) is k8s service provided by AWS Cloud
      */
-    AWS_EKS(22, true);
+    AWS_EKS(22, true),
+
+    /**
+     * Windows Machine
+     */
+    OS_WINDOWS(23, true),
+
+    /**
+     * Amazon Simple Storage Service (Amazon S3) is an object storage service provided by AWS Cloud
+     */
+    AWS_S3(24, true),
+
+    /*
+     * Amazon DynamoDB is a fully managed NoSQL database service that provides
+     * fast and predictable performance with seamless scalability.
+     */
+    AWS_DYNAMODB(25, true);
 
     private final int value;
     /**

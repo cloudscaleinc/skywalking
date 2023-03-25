@@ -27,6 +27,7 @@ public class Const {
     public static final String RELATION_ID_CONNECTOR = "-";
     public static final String RELATION_ID_PARSER_SPLIT = "\\-";
     public static final String LINE = "-";
+    public static final String UNDERSCORE = "_";
     public static final String COMMA = ",";
     public static final String SPACE = " ";
     public static final String KEY_VALUE_SPLIT = ",";
@@ -41,4 +42,12 @@ public class Const {
     public static final String POINT = ".";
     public static final String DOUBLE_COLONS_SPLIT = "::";
     public static final String BLANK_ENTITY_NAME = "_blank";
+
+    public static final class TLS_MODE {
+        public static final String NON_TLS = "NONE";
+
+        public static final String M_TLS = "mTLS";
+
+        public static final String TLS = "TLS";
+    }
 }

@@ -70,9 +70,6 @@ public class AWSFirehoseReceiverModuleProvider extends ModuleProvider {
                                                                   .acceptQueueSize(moduleConfig.getAcceptQueueSize())
                                                                   .maxRequestHeaderSize(
                                                                       moduleConfig.getMaxRequestHeaderSize())
-                                                                  .enableTLS(moduleConfig.isEnableTLS())
-                                                                  .tlsKeyPath(moduleConfig.getTlsKeyPath())
-                                                                  .tlsCertChainPath(moduleConfig.getTlsCertChainPath())
                                                                   .build();
         httpServer = new HTTPServer(httpServerConfig);
         httpServer.initialize();
@@ -85,7 +82,7 @@ public class AWSFirehoseReceiverModuleProvider extends ModuleProvider {
                                                                           .getService(
                                                                               OpenTelemetryMetricRequestProcessor.class);
         httpServer.addHandler(
-            new FirehoseHTTPHandler(processor),
+            new FirehoseHTTPHandler(processor, moduleConfig.getFirehoseAccessKey()),
             Collections.singletonList(HttpMethod.POST)
         );
     }
