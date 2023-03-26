@@ -1,5 +1,6 @@
 Apache SkyWalking
 ==========
+CloudScale
 
 <img src="http://skywalking.apache.org/assets/logo.svg" alt="Sky Walking logo" height="90px" align="right" />
 
