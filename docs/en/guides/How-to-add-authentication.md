@@ -1,6 +1,6 @@
 # How to add authentication
 
-**We are using Nginx as a reverse proxy to secure access to the SkyWalking dashboard
+**We are using Nginx as a reverse proxy to secure access to the SkyWalking dashboard**
 
 1.Install Nginx: You can install Nginx on your Azure VM by running the following command:
 	`sudo apt-get update`
