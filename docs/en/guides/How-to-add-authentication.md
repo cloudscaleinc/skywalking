@@ -1,4 +1,4 @@
-#How to add authentication
+# How to add authentication
 
 **We are using Nginx as a reverse proxy to secure access to the SkyWalking dashboard
 
