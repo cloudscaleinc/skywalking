@@ -2,8 +2,10 @@
 
 ## Without Docker
 1. Create an Azure Virtual machine with appropriate Operating System. eg: Ubuntu, Debian etc.
-2. Install git, JDK11+ and Maven.
-3. Clone the skywalking Project
+2. Connect to the Azure VM using any protocol. for eg : SSH.
+    `ssh -i "<Path to key file>" <username>@<Azure VM IP>`
+3. Install git, JDK11+ and Maven.
+4. Clone the skywalking Project
     ```bash
     git clone https://github.com/apache/skywalking.git
     cd skywalking/
