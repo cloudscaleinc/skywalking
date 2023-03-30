@@ -7,7 +7,7 @@
 3. Install git, JDK11+ and Maven.
 4. Clone the skywalking Project
     ```bash
-    git clone https://github.com/apache/skywalking.git
+    git clone https://github.com/cloudscaleinc/skywalking.git
     cd skywalking/
     git submodule init
     git submodule update
