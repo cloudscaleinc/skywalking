@@ -26,7 +26,7 @@ services:
     networks:
       - demo
     healthcheck:
-      test: [ "CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health || exit 1" ]
+      test: ["CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -53,7 +53,7 @@ services:
       - 17913:17913
     command: standalone --stream-root-path /tmp/stream-data --measure-root-path /tmp/measure-data
     healthcheck:
-      test: [ "CMD", "sh", "-c", "nc -nz 127.0.0.1 17912" ]
+      test: ["CMD", "sh", "-c", "nc -nz 127.0.0.1 17912"]
       interval: 5s
       timeout: 60s
       retries: 120
@@ -67,7 +67,7 @@ services:
     networks:
       - demo
     healthcheck:
-      test: [ "CMD-SHELL", "curl http://localhost:12800/internal/l7check" ]
+      test: ["CMD-SHELL", "curl --silent --fail http://localhost:12800/internal/l7check || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -116,3 +116,4 @@ services:
 
 networks:
   demo:
+
