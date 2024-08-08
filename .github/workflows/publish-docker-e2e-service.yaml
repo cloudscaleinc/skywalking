@@ -20,9 +20,9 @@ on:
   push:
     branches:
       - skywalking-azure
-    paths:
-      - 'test/e2e-v2/java-test-service/**'
-      - 'test/Makefile'
+  #  paths:
+ #     - 'test/e2e-v2/java-test-service/**'
+#      - 'test/Makefile'
 
 env:
   SKIP_TEST: true
