@@ -27,8 +27,8 @@ jobs:
     - name: Build Docker image
       uses: docker/build-push-action@v3
       with:
-        context: .
-        file: Dockerfile
+        context: ./docker
+        file: ./docker/Dockerfile
         push: true
         tags: keshavimperial/skywalking:latest
 
@@ -43,7 +43,6 @@ jobs:
         ssh -o StrictHostKeyChecking=no $VM_USER@$VM_IP << 'EOF'
           cd docker
           docker pull keshavimperial/skywalking:latest
-          docker-compose down
           docker-compose --profile elasticsearch up -d
         EOF
 
