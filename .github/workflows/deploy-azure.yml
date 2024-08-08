@@ -39,6 +39,7 @@ jobs:
         # Connect to the VM and execute commands
         ssh -vvv -o StrictHostKeyChecking=no -t $VM_USER@$VM_IP << 'EOF'
           cd ~/skywalking/docker
+          docker-compose --profile elasticsearch down
           docker-compose --profile elasticsearch up -d
         EOF
 
