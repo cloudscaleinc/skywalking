@@ -19,7 +19,7 @@ name: Publish E2E service images
 on:
   push:
     branches:
-      - master
+      - skywalking-azure
     paths:
       - 'test/e2e-v2/java-test-service/**'
       - 'test/Makefile'
