@@ -37,7 +37,7 @@ jobs:
         ssh-add ~/.ssh/id_ed25519
 
         # Connect to the VM and execute commands
-        ssh -v -o StrictHostKeyChecking=no $VM_USER@$VM_IP << 'EOF'
+        ssh -vvv -o StrictHostKeyChecking=no -t $VM_USER@$VM_IP << 'EOF'
           cd ~/skywalking/docker
           docker-compose --profile elasticsearch up -d
         EOF
