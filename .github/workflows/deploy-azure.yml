@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - skywalking-azure
 
 jobs:
   deploy:
@@ -25,29 +24,27 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-buildx-
 
+    - name: Build Docker image
+      uses: docker/build-push-action@v3
+      with:
+        context: ./docker
+        file: ./docker/Dockerfile
+        push: true
+        tags: keshavimperial/skywalking:latest
+
     - name: Deploy to Azure VM
       env:
         SSH_PRIVATE_KEY_BASE64: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
         VM_IP: ${{ secrets.VM_IP }}
         VM_USER: ${{ secrets.VM_USER }}
       run: |
-        # Create .ssh directory
         mkdir -p ~/.ssh
-        chmod 700 ~/.ssh
-
-        # Decode the SSH private key and write it to id_ed25519
         echo "$SSH_PRIVATE_KEY_BASE64" | base64 --decode > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
-
-        # Add the SSH key to the ssh-agent
-        eval "$(ssh-agent -s)"
+        eval $(ssh-agent)
         ssh-add ~/.ssh/id_ed25519
-
-        # SSH into the VM and execute Docker commands
         ssh -o StrictHostKeyChecking=no $VM_USER@$VM_IP << 'EOF'
-          cd /skywalking/docker  # Navigate to the docker folder on your VM
-          docker-compose --profile elasticsearch down  # Stop any existing containers
-          docker-compose --profile elasticsearch pull  # Pull latest images
-          docker-compose --profile elasticsearch up -d  # Start the containers
+          cd ~/skywalking/docker
+          docker-compose --profile elasticsearch up -d
         EOF
 
