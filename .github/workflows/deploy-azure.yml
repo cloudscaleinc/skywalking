@@ -36,8 +36,8 @@ jobs:
         echo "$SSH_PRIVATE_KEY_BASE64" | base64 --decode > ~/.ssh/id_ed25519
         chmod 600 ~/.ssh/id_ed25519
         eval $(ssh-agent -s)
-        echo "$SSH_PASS_PHRASE" | ssh-add ~/.ssh/id_ed25519
-        ssh -v -o StrictHostKeyChecking=no -t $VM_USER@$VM_IP << 'EOF'
+        ssh-add ~/.ssh/id_ed25519
+        ssh -vvv -o StrictHostKeyChecking=no -t $VM_USER@$VM_IP << 'EOF'
           cd ~/skywalking/docker
           docker-compose --profile elasticsearch up -d
         EOF
