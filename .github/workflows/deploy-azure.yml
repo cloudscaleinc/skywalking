@@ -3,7 +3,7 @@ name: Deploy to Azure VM
 on:
   push:
     branches:
-      - skywwalking-azure
+      - skywalking-azure
 
 jobs:
   deploy:
