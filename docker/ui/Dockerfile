@@ -33,7 +33,7 @@ RUN tar -xzf "$DIST" --strip 1; \
     rm -rf "agent";
 
 COPY docker-entrypoint.sh .
-COPY log4j2.xml webapp/
+COPY log4j2.xml .
 
 EXPOSE 8080
 
