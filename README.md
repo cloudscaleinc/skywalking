@@ -1,69 +1,88 @@
-Apache SkyWalking
-==========
+# SkyWalking Azure Deployment Guide
 
-<img src="http://skywalking.apache.org/assets/logo.svg" alt="Sky Walking logo" height="90px" align="right" />
+This will help you setting up the SkyWalking project on an Azure VM using Docker for installation.
 
-**SkyWalking**: an APM (Application Performance Monitoring) system, especially designed for
-microservices, cloud native and container-based architectures.
+## Prerequisites
 
-[![GitHub stars](https://img.shields.io/github/stars/apache/skywalking.svg?style=for-the-badge&label=Stars&logo=github)](https://github.com/apache/skywalking)
-[![Twitter Follow](https://img.shields.io/twitter/follow/asfskywalking.svg?style=for-the-badge&label=Follow&logo=twitter)](https://twitter.com/AsfSkyWalking)
+- **Java**: Java Development Kit (JDK) 11 or 20
+- **Maven**: Install Maven from Maven's official site
+- **Git**: Make sure Git is installed on your local machine.
+- **Docker**: Ensure Docker and Docker Compose are installed.
+- **Azure CLI**: Install the Azure CLI to manage Azure resources.
 
-[![Maven Central](https://img.shields.io/maven-central/v/org.apache.skywalking/apache-skywalking-apm.svg)](http://skywalking.apache.org/downloads/)
+## 1. Clone the Repository
 
-# Abstract
-**SkyWalking** is an open-source APM system that provides monitoring, tracing and diagnosing capabilities for distributed systems in Cloud Native architectures.
+Clone the SkyWalking repository to your local machine:
+```sh
+git clone https://github.com/your-repo/skywalking.git
+cd skywalking
+```
 
+## Checkout the Specific Branch
+```sh
+git checkout skywalking-azure
+```
 
-* Distributed Tracing
-  * End-to-end distributed tracing. Service topology analysis, service-centric observability and APIs dashboards.
-* Agents for your stack
-  * Java, .Net Core, PHP, NodeJS, Golang, LUA, Rust, C++, Client JavaScript and Python agents with active development and maintenance.
-* eBPF early adoption
-  * Rover agent works as a monitor and profiler powered by eBPF to monitor Kubernetes deployments and diagnose CPU and network performance.
-* Scaling
-  * 100+ billion telemetry data could be collected and analyzed from one SkyWalking cluster.
-* Mature Telemetry Ecosystems Supported
-  * Metrics, Traces, and Logs from mature ecosystems are supported, e.g. Zipkin, OpenTelemetry, Prometheus, Zabbix, Fluentd
-* Native APM Database
-  * BanyanDB, an observability database, created in 2022, aims to ingest, analyze and store telemetry/observability data.
-* Consistent Metrics Aggregation
-  * SkyWalking native meter format and widely known metrics format(OpenTelemetry, Telegraf, Zabbix, e.g.) are processed through the same script pipeline.
-* Log Management Pipeline
-  * Support log formatting, extract metrics, various sampling policies through script pipeline in high performance.
-* Alerting and Telemetry Pipelines
-  * Support service-centric, deployment-centric, API-centric alarm rule setting. Support forwarding alarms and all telemetry data to 3rd party.
+## Initialize Submodules
+```sh
+git submodule update --init --recursive
+```
 
-<img src="https://skywalking.apache.org/images/home/architecture.svg?t=20220516"/>
+## Prepare Docker Environment
+```sh
+make docker
+```
 
-# Live Demo
-- Find the [SkyWalking live demo with native UI and Grafana](https://skywalking.apache.org/#demo), and [screenshots](https://skywalking.apache.org/#arch) on our website.
-- Follow the [showcase](https://skywalking.apache.org/docs/skywalking-showcase/next/readme/) to set up a preview deployment quickly.
+## Build and Run the Containers
+```sh
+docker-compose --profile elasticsearch up -d
+```
 
-# Documentation
-- [Official documentation](https://skywalking.apache.org/docs/#SkyWalking)
+## Log in to Azure
+```sh
+az login
+```
 
-# Downloads
-Please head to the [releases page](https://skywalking.apache.org/downloads/) to download a release of Apache SkyWalking.
+## Create a Resource Group
+```sh
+az group create --name skywalking-rg --location centralindia
+```
 
-# Compiling project
-Follow this [document](docs/en/guides/How-to-build.md).
+## Create an Azure VM
+```sh
+az vm create --resource-group skywalking-rg --name skywalking-vm --image UbuntuLTS --admin-username azureuser --generate-ssh-keys
+```
 
-# Code of conduct
-This project adheres to the Contributor Covenant [code of conduct](https://www.apache.org/foundation/policies/conduct). By participating, you are expected to uphold this code.
-Please follow the [REPORTING GUIDELINES](https://www.apache.org/foundation/policies/conduct#reporting-guidelines) to report unacceptable behavior.
+## Open Port 8080 on the Azure VM
+```sh
+az vm open-port --resource-group skywalking-rg --name skywalking-vm --port 8080
+```
 
-# Contact Us
-* Mail list: **dev@skywalking.apache.org**. Mail to `dev-subscribe@skywalking.apache.org`, follow the reply to subscribe the mail list.
-* Send `Request to join SkyWalking slack` mail to the mail list(`dev@skywalking.apache.org`), we will invite you in.
-* For Chinese speaker, send `[CN] Request to join SkyWalking slack` mail to the mail list(`dev@skywalking.apache.org`), we will invite you in.
-* Twitter, [ASFSkyWalking](https://twitter.com/AsfSkyWalking)
-* [bilibili B站 视频](https://space.bilibili.com/390683219)
-* [掘金](https://juejin.cn/user/13673577331607/posts)
-  
-# Our Users
-Hundreds of companies and organizations use SkyWalking for research, production, and commercial purposes.
-Visit our [website](http://skywalking.apache.org/users/) to find the user page.
+## SSH into the Azure VM
+```sh
+ssh azureuser@your-vm-ip
+```
 
-# License
-[Apache 2.0 License.](LICENSE)
+## Pull the Docker Image inside the VM
+```sh
+docker pull your-docker-image
+```
+
+## Run the Docker Container
+```sh
+docker run -d -p 8080:8080 your-docker-image
+```
+## Configure GitHub Secrets
+
+Add the secrets
+```sh
+SSH_PRIVATE_KEY : key used for accessing the VM
+VM_IP: The public IP address of your VM.
+VM_USER: The SSH username for the VM.
+```
+## Create the GitHub Container
+Generate a github Personal access token :
+store its value in PAT
+```sh
+echo $PAT | docker login ghcr.io -u your-username --password-stdin
+```
