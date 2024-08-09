@@ -1,3 +1,5 @@
+
+
 name: Publish E2E service images
 
 on:
@@ -53,10 +55,9 @@ jobs:
 
       - name: Push the image to your registry
         run: |
-        docker build -t ghcr.io/keshav8s/skywalking/skywalking-ui:latest -f ~/docker/ui/Dockerfile ~/docker/ui
-        docker push ghcr.io/keshav8s/skywalking/skywalking-ui:latest
+          docker build -t ${{ env.HUB }}/skywalking-ui:latest -f docker/ui/Dockerfile .
+          docker push ${{ env.HUB }}/skywalking-ui:latest
 
-        docker build -t ghcr.io/keshav8s/skywalking/skywalking-oap:latest -f ~/docker/oap/Dockerfile ~/docker/oap
-        docker push ghcr.io/keshav8s/skywalking/skywalking-oap:latest
-
+          docker build -t ${{ env.HUB }}/skywalking-oap:latest -f docker/oap/Dockerfile .
+          docker push ${{ env.HUB }}/skywalking-oap:latest
           #docker build -t docker.elastic.co/elasticsearch/elasticsearch-oss:7.4.2 -f ~/
