@@ -53,11 +53,11 @@ jobs:
           HUB: ${{ env.HUB }}
           TAG: ${{ env.TAG }}
 
-      - name: Push the image to your registry
-        run: |
-          docker build -t ${{ env.HUB }}/skywalking-ui:latest -f docker/ui/Dockerfile docker/ui
-          docker push ${{ env.HUB }}/skywalking-ui:latest
+#      - name: Push the image to your registry
+#        run: |
+#          docker build -t ${{ env.HUB }}/skywalking-ui:latest -f docker/ui/Dockerfile docker/ui
+#          docker push ${{ env.HUB }}/skywalking-ui:latest
 
-          docker build -t ${{ env.HUB }}/skywalking-oap:latest -f docker/oap/Dockerfile docker/oap
-          docker push ${{ env.HUB }}/skywalking-oap:latest
-          #docker build -t docker.elastic.co/elasticsearch/elasticsearch-oss:7.4.2 -f ~/
+#          docker build -t ${{ env.HUB }}/skywalking-oap:latest -f docker/oap/Dockerfile docker/oap
+#          docker push ${{ env.HUB }}/skywalking-oap:latest
+#          docker build -t docker.elastic.co/elasticsearch/elasticsearch-oss:7.4.2 -f ~/
