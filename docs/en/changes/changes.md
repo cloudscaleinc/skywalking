@@ -4,6 +4,7 @@
 
 * E2E: bump up the version of the opentelemetry-collector to 0.102.1.
 * Push snapshot data-generator docker image to ghcr.io.
+* Bump up skywalking-infra-e2e to work around GHA removing `docker-compose` v1.
 
 #### OAP Server
 
@@ -45,6 +46,9 @@
 * BanyanDB: if the model column is already a `@BanyanDB.TimestampColumn`, set `@BanyanDB.NoIndexing` on it to reduce indexes.
 * BanyanDB: stream sort-by `time` query, use internal time-series rather than `index` to improve the query performance.
 * Bump up graphql-java to 21.5.
+* Add Unknown Node when receive Kubernetes peer address is not aware in current cluster.
+* Fix CounterWindow concurrent increase cause NPE by PriorityQueue
+* Fix format the endpoint name with empty string.
 
 #### UI
 
