@@ -30,6 +30,8 @@ jobs:
         VM_IP: ${{ secrets.VM_IP }}
         VM_USER: ${{ secrets.VM_USER }}
       run: |
+        eval $(ssh-agent -s)
+        echo "$SSH_PRIVATE_KEY_BASE64" | base64 --decode | ssh-add -
 
         # Connect to the VM and execute commands
         ssh -vvv -o StrictHostKeyChecking=no -t $VM_USER@$VM_IP << 'EOF'
