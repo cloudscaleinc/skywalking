@@ -9,4 +9,4 @@
 	url = https://github.com/apache/skywalking-data-collect-protocol.git
 [submodule "skywalking-ui"]
 	path = skywalking-ui
-	url = git@github.com:Keshav8s/skywalking-booster-ui.git
+	url = git@github.com:cloudscaleinc/skywalking-booster-ui.git
