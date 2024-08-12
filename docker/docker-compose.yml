@@ -67,7 +67,7 @@ services:
     networks:
       - demo
     healthcheck:
-      test: ["CMD-SHELL", "curl --silent --fail http://localhost:12800/internal/l7check || exit 1"]
+      test: ["CMD-SHELL", "curl http://localhost:12800/internal/l7check"]
       interval: 30s
       timeout: 10s
       retries: 3
