@@ -30,11 +30,6 @@ jobs:
         VM_IP: ${{ secrets.VM_IP }}
         VM_USER: ${{ secrets.VM_USER }}
       run: |
-        mkdir -p ~/.ssh
-        echo "$SSH_PRIVATE_KEY_BASE64" | ~/.ssh/id_ed25519
-        chmod 600 ~/.ssh/id_ed25519
-        eval $(ssh-agent -s)
-        ssh-add ~/.ssh/id_ed25519
 
         # Connect to the VM and execute commands
         ssh -vvv -o StrictHostKeyChecking=no -t $VM_USER@$VM_IP << 'EOF'
