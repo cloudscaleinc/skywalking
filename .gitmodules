@@ -10,3 +10,4 @@
 [submodule "skywalking-ui"]
 	path = skywalking-ui
 	url = git@github.com:cloudscaleinc/skywalking-booster-ui.git
+        branch = keshav-poc
