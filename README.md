@@ -46,6 +46,10 @@ microservices, cloud native and container-based architectures.
 # Downloads
 Please head to the [releases page](https://skywalking.apache.org/downloads/) to download a release of Apache SkyWalking.
 
+# Skywalking deployment on Azure VM
+For detailed instructions on deploying Skywalking APM on Azure VM, please refer to [README-CloudScale.md](./README-CloudScale.md).
+
+
 # Compiling project
 Follow this [document](docs/en/guides/How-to-build.md).
 
