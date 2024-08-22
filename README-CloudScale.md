@@ -70,7 +70,7 @@ docker pull docker-image
 
 ## Run the Docker Container
 ```sh
-docker run -d -p 8080:8080 docker-image
+docker-compose --profile elasticsearch up -d
 ```
 ## Configure GitHub Secrets
 
