@@ -51,8 +51,17 @@ jobs:
     - name: Load Environment Variables
       run: source docker/.env
 
-    - name: Set DIST variable
-      run: echo "DIST=apache-skywalking-apm-bin.tar.gz" >> $GITHUB_ENV 
+    # - name: Set DIST variable
+    #   run: echo "DIST=apache-skywalking-apm-bin.tar.gz" >> $GITHUB_ENV
+
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+
+    - name: Run `make docker` to generate distribution tarball
+      run: make docker SKIP_TEST=true
 
     - name: Build OAP Docker Image
       run: |
