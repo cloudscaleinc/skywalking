@@ -50,7 +50,7 @@ jobs:
 
     - name: Build and Push Docker Image
       run: |
-        cd $GITHUB_WORKSPACE/skywalking/docker
+        cd $GITHUB_WORKSPACE/docker
         docker build -t $BANYANDB_IMAGE -f oap/Dockerfile .
         docker build -t $OAP_IMAGE -f oap/Dockerfile .
         docker build -t $UI_IMAGE -f ui/Dockerfile .
