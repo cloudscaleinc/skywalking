@@ -51,16 +51,37 @@ jobs:
     - name: Load Environment Variables
       run: source docker/.env
 
-    - name: Build and Push Docker Image
+    - name: Set DIST variable
+      run: echo "DIST=apache-skywalking-apm-bin.tar.gz" >> $GITHUB_ENV 
+
+    - name: Build OAP Docker Image
       run: |
-        cd docker
-        pwd
-        ls -la
-        docker build -f oap/Dockerfile -t ghcr.io/keshav8s/skywalking-oap:${{ github.sha }} .
-        docker build -t ghcr.io/keshav8s/skywalking/ui:${{ github.sha }} -f ui/Dockerfile .
+       docker build --build-arg DIST=$DIST -t ghcr.io/keshav8s/skywalking/oap:${{ github.sha }} -f docker/oap/Dockerfile .
+      
+    - name: Push OAP Docker Image
+      run: |
+       docker push ghcr.io/keshav8s/skywalking/oap:${{ github.sha }}
+      
+    - name: Build UI Docker Image
+      run: |
+       docker build --build-arg DIST=$DIST -t ghcr.io/keshav8s/skywalking/ui:${{ github.sha }} -f docker/ui/Dockerfile .
+      
+    - name: Push UI Docker Image
+      run: |
+       docker push ghcr.io/keshav8s/skywalking/ui:${{ github.sha }}
+      
+
+    # - name: Build and Push Docker Image
+    #   run: |
+        # cd docker
+        # pwd
+        # ls -la
         
-        docker push $OAP_IMAGE
-        docker push $UI_IMAGE
+        # docker build -f oap/Dockerfile -t ghcr.io/keshav8s/skywalking-oap:${{ github.sha }} .
+        # docker build -t ghcr.io/keshav8s/skywalking/ui:${{ github.sha }} -f ui/Dockerfile .
+        
+        # docker push $OAP_IMAGE
+        # docker push $UI_IMAGE
 
   deploy:
     needs: build-and-push
