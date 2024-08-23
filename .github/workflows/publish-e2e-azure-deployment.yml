@@ -50,7 +50,8 @@ jobs:
 
     - name: Build and Push Docker Image
       run: |
-        docker build -t ghcr.io/keshav8s/skywalking:${{ github.sha }} .
+        cd ~/skywalking/docker
+        docker build -t ghcr.io/keshav8s/skywalking:${{ github.sha }} ./skywalking/docker
         docker push ghcr.io/keshav8s/skywalking:${{ github.sha }}
 
   deploy:
@@ -65,12 +66,15 @@ jobs:
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            cd ~/skywalking
+          
             # Pull the latest code
             git pull origin main
-  
+          
+            cd ~/skywalking/docker
             # Pull the pre-built Docker image from GitHub Container Registry
             docker pull ghcr.io/${{ github.actor }}/skywalking:${{ github.sha }}
-  
+      
             # Update Docker Compose to use the pulled image
             sed -i 's|image: .*|image: ghcr.io/${{ github.actor }}/skywalking:${{ github.sha }}|' docker/docker-compose.yml
   
