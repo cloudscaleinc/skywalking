@@ -18,7 +18,7 @@ ARG BASE_IMAGE='eclipse-temurin:11-jre'
 
 FROM $BASE_IMAGE
 
-ENV SKYWALKING_HOME=/skywalking
+ENV SKYWALKING_HOME=/skywalking/docker
 
 ENV PATH=$SKYWALKING_HOME/bin:$PATH
 
