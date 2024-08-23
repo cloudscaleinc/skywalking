@@ -42,8 +42,8 @@ RUN set -ex; \
     rm -rf "agent"; \
     mkdir "bin";
 
-COPY oap/log4j2.xml config/
-COPY oap/docker-entrypoint.sh .
+COPY log4j2.xml config/
+COPY docker-entrypoint.sh .
 
 RUN mkdir ext-config; \
     mkdir ext-libs;
