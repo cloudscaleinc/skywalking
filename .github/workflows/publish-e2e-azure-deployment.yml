@@ -53,8 +53,22 @@ jobs:
     - name: Load Environment Variables
       run: source docker/.env
 
-    # - name: Set DIST variable
-    #   run: echo "DIST=apache-skywalking-apm-bin.tar.gz" >> $GITHUB_ENV
+    - name: Build distribution tar
+      run: |
+        ./mvnw clean install javadoc:javadoc -B -q -Pall \
+          -Dmaven.test.skip \
+          -Dcheckstyle.skip
+    - name: Verify builds are reproducible
+      run: ./mvnw -Dmaven.test.skip clean verify artifact:compare -Pall
+    - uses: actions/upload-artifact@v3
+      name: Upload distribution tar
+      with:
+        name: dist
+        path: dist
+        
+
+    - name: Set DIST variable
+      run: echo "DIST=apache-skywalking-apm-bin.tar.gz" >> $GITHUB_ENV
 
     - name: Set up Java
       uses: actions/setup-java@v3
@@ -76,12 +90,9 @@ jobs:
       run: make docker SKIP_TEST=true
       if: steps.build-cache.outputs.cache-hit != 'true'
     
-    
     - name: Check if OAP Docker Image exists
       id: check-oap-image
       run: |
-        # Ensure the tarball exists before building
-        ls -l apache-skywalking-apm-bin.tar.gz
         if docker pull ghcr.io/keshav8s/skywalking/oap:${{ github.sha }}; then
           echo "OAP image exists"
           echo "IMAGE_EXISTS=true" >> $GITHUB_ENV
@@ -92,6 +103,8 @@ jobs:
 
     - name: Build OAP Docker Image with Cache Support
       run: |
+        # Ensure the tarball exists before building
+        ls -l apache-skywalking-apm-bin.tar.gz
         cd docker/oap
         docker buildx build \
           --cache-from=type=gha \
