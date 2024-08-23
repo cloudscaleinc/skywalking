@@ -18,7 +18,7 @@ ARG BASE_IMAGE='eclipse-temurin:11-jre'
 
 FROM $BASE_IMAGE
 
-ENV SKYWALKING_HOME=/skywalking/docker
+ENV SKYWALKING_HOME=/skywalking
 
 ENV PATH=$SKYWALKING_HOME/bin:$PATH
 
@@ -30,11 +30,11 @@ ARG DIST
 
 COPY "$DIST" .
 
-# Copy the tarball from the build context
-COPY apache-skywalking-apm-bin.tar.gz .
+# # Copy the tarball from the build context
+# COPY apache-skywalking-apm-bin.tar.gz .
 
 RUN set -ex; \
-    tar -xzf "apache-skywalking-apm-bin.tar.gz" --strip 1; \
+    tar -xzf "$DIST" --strip 1; \
     rm -rf "$DIST"; \
     rm -rf "config/log4j2.xml"; \
     rm -rf "bin"; \
