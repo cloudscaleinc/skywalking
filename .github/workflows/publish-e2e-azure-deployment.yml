@@ -39,7 +39,10 @@ jobs:
         submodules: true
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
+      uses: docker/setup-buildx-action@v2
+      with:
+        driver-opts: network=host,buildkitd-flags=--oci-worker-snapshotter=native
+
 
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v2
@@ -59,9 +62,22 @@ jobs:
       with:
         java-version: '11'
         distribution: 'temurin'
+        
+    - name: Cache build artifacts for make docker
+      uses: actions/cache@v3
+      id: build-cache
+      with:
+        path: |
+          ~/.m2
+          dist/*
+        key: ${{ runner.os }}-make-docker-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-make-docker-
+          
 
     - name: Run `make docker` to generate distribution tarball
       run: make docker SKIP_TEST=true
+      if: steps.build-cache.outputs.cache-hit != 'true'
     
     
     - name: Check if OAP Docker Image exists
@@ -99,8 +115,6 @@ jobs:
     - name: Push UI Docker Image
       run: |
         docker push ghcr.io/keshav8s/skywalking/ui:${{ github.sha }}
-
-
 
   deploy:
     needs: build-and-push
