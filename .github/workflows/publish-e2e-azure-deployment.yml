@@ -51,10 +51,9 @@ jobs:
     - name: Build and Push Docker Image
       run: |
         cd $GITHUB_WORKSPACE/docker
-        docker build -t $BANYANDB_IMAGE -f oap/Dockerfile .
         docker build -t $OAP_IMAGE -f oap/Dockerfile .
         docker build -t $UI_IMAGE -f ui/Dockerfile .
-        docker push $BANYANDB_IMAGE
+
         docker push $OAP_IMAGE
         docker push $UI_IMAGE
 
