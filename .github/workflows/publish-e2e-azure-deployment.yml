@@ -56,7 +56,7 @@ jobs:
         cd docker
         pwd
         ls -la
-        docker build -t ghcr.io/keshav8s/skywalking/oap:${{ github.sha }} -f oap/Dockerfile .
+        docker build -f oap/Dockerfile -t ghcr.io/keshav8s/skywalking-oap:${{ github.sha }} .
         docker build -t ghcr.io/keshav8s/skywalking/ui:${{ github.sha }} -f ui/Dockerfile .
         
         docker push $OAP_IMAGE
