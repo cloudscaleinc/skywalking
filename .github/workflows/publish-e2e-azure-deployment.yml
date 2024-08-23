@@ -56,11 +56,11 @@ jobs:
         cd docker
         pwd
         ls -la
-        docker build -t $OAP_IMAGE -f oap/Dockerfile docker
-        docker build -t $UI_IMAGE -f ui/Dockerfile docker
+        docker build -t ghcr.io/keshav8s/skywalking/oap:${{ github.sha }} -f oap/Dockerfile .
+        docker build -t ghcr.io/keshav8s/skywalking/ui:${{ github.sha }} -f ui/Dockerfile .
         
-        # docker push $OAP_IMAGE
-        # docker push $UI_IMAGE
+        docker push $OAP_IMAGE
+        docker push $UI_IMAGE
 
   deploy:
     needs: build-and-push
