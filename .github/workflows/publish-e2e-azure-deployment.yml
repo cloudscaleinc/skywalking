@@ -62,39 +62,45 @@ jobs:
 
     - name: Run `make docker` to generate distribution tarball
       run: make docker SKIP_TEST=true
+    
+    
+    - name: Check if OAP Docker Image exists
+      id: check-oap-image
+      run: |
+        if docker pull ghcr.io/keshav8s/skywalking/oap:${{ github.sha }}; then
+          echo "OAP image exists"
+          echo "IMAGE_EXISTS=true" >> $GITHUB_ENV
+        else
+          echo "OAP image does not exist"
+          echo "IMAGE_EXISTS=false" >> $GITHUB_ENV
+        fi
 
     - name: Build OAP Docker Image
-      run: |
-       cd docker
-       pwd
-       ls -la
-       # docker build --build-arg DIST=$DIST -t ghcr.io/keshav8s/skywalking/oap:${{ github.sha }} -f docker/oap/Dockerfile .
-       docker build -f oap/Dockerfile -t ghcr.io/keshav8s/skywalking/oap:${{ github.sha }} .
-      
-    - name: Push OAP Docker Image
-      run: |
-       docker push ghcr.io/keshav8s/skywalking/oap:${{ github.sha }}
+      if: env.IMAGE_EXISTS == 'false'
+      uses: docker/build-push-action@v2
+      with:
+        context: ./docker
+        file: ./docker/oap/Dockerfile
+        push: true
+        tags: ghcr.io/keshav8s/skywalking/oap:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
       
     - name: Build UI Docker Image
-      run: |
-       docker build --build-arg DIST=$DIST -t ghcr.io/keshav8s/skywalking/ui:${{ github.sha }} -f docker/ui/Dockerfile .
-      
+      uses: docker/build-push-action@v2
+      with:
+        context: ./docker
+        file: ./docker/ui/Dockerfile
+        push: true
+        tags: ghcr.io/keshav8s/skywalking/ui:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
     - name: Push UI Docker Image
       run: |
-       docker push ghcr.io/keshav8s/skywalking/ui:${{ github.sha }}
-      
+        docker push ghcr.io/keshav8s/skywalking/ui:${{ github.sha }}
 
-    # - name: Build and Push Docker Image
-    #   run: |
-        # cd docker
-        # pwd
-        # ls -la
-        
-        # docker build -f oap/Dockerfile -t ghcr.io/keshav8s/skywalking-oap:${{ github.sha }} .
-        # docker build -t ghcr.io/keshav8s/skywalking/ui:${{ github.sha }} -f ui/Dockerfile .
-        
-        # docker push $OAP_IMAGE
-        # docker push $UI_IMAGE
+
 
   deploy:
     needs: build-and-push
