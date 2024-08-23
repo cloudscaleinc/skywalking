@@ -23,7 +23,7 @@ on:
 
 jobs:
   build-and-push:
-    if: github.repository == 'Keshav8s/skywalking'
+    if: github.repository == 'keshav8s/skywalking'
     runs-on: ubuntu-latest
     permissions:
       contents: read
