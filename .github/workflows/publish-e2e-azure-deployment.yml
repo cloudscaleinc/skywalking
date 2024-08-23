@@ -56,11 +56,11 @@ jobs:
         cd docker
         pwd
         ls -la
-        docker buildx build -t $OAP_IMAGE -f oap/Dockerfile .
-        docker buildx build -t $UI_IMAGE -f ui/Dockerfile .
-
-        docker push $OAP_IMAGE
-        docker push $UI_IMAGE
+        docker buildx build -t $OAP_IMAGE -f oap/Dockerfile . --push
+        docker buildx build -t $UI_IMAGE -f ui/Dockerfile . --push
+        
+        # docker push $OAP_IMAGE
+        # docker push $UI_IMAGE
 
   deploy:
     needs: build-and-push
