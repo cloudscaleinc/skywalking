@@ -92,14 +92,14 @@ jobs:
 
     - name: Build OAP Docker Image with Cache Support
       run: |
-        cd docker
+        cd docker/oap
         docker buildx build \
           --cache-from=type=gha \
           --cache-to=type=gha,mode=max \
-          --file ./oap/Dockerfile \
+          --file ./Dockerfile \
           --tag ghcr.io/keshav8s/skywalking/oap:${{ github.sha }} \
-          --push .
-
+          --push ../../..
+          
     - name: Push OAP Docker Image
       run: docker push ghcr.io/keshav8s/skywalking/oap:${{ github.sha }}
       
