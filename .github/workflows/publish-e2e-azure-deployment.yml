@@ -62,14 +62,12 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
         
-    - name: Cache build artifacts for make docker
+    - name: Cache `make docker` output
       uses: actions/cache@v3
-      id: build-cache
       with:
         path: |
-          ~/.m2
-          dist/*
-        key: ${{ runner.os }}-make-docker-${{ github.sha }}
+          ./.output-directory
+        key: ${{ runner.os }}-make-docker-${{ hashFiles('**/*') }}
         restore-keys: |
           ${{ runner.os }}-make-docker-
           
@@ -98,7 +96,7 @@ jobs:
           --cache-to=type=gha,mode=max \
           --file ./Dockerfile \
           --tag ghcr.io/keshav8s/skywalking/oap:${{ github.sha }} \
-          --push ../../..
+          --push .
           
     - name: Push OAP Docker Image
       run: docker push ghcr.io/keshav8s/skywalking/oap:${{ github.sha }}
