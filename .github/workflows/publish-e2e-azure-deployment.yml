@@ -80,6 +80,8 @@ jobs:
     - name: Check if OAP Docker Image exists
       id: check-oap-image
       run: |
+        # Ensure the tarball exists before building
+        ls -l apache-skywalking-apm-bin.tar.gz
         if docker pull ghcr.io/keshav8s/skywalking/oap:${{ github.sha }}; then
           echo "OAP image exists"
           echo "IMAGE_EXISTS=true" >> $GITHUB_ENV
