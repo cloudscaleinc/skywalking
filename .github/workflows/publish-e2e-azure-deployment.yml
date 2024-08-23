@@ -50,7 +50,7 @@ jobs:
 
     - name: Build and Push Docker Image
       run: |
-        cd $GITHUB_WORKSPACE/docker
+        cd docker
         pwd
         ls -la
         docker buildx build -t $OAP_IMAGE -f oap/Dockerfile .
