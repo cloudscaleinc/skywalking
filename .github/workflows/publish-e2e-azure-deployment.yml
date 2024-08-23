@@ -48,6 +48,9 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Load Environment Variables
+      run: source docker/.env
+
     - name: Build and Push Docker Image
       run: |
         cd docker
