@@ -30,8 +30,11 @@ ARG DIST
 
 COPY "$DIST" .
 
+# Copy the tarball from the build context
+COPY apache-skywalking-apm-bin.tar.gz 
+
 RUN set -ex; \
-    tar -xzf "$DIST" --strip 1; \
+    tar -xzf "apache-skywalking-apm-bin.tar.gz" --strip 1; \
     rm -rf "$DIST"; \
     rm -rf "config/log4j2.xml"; \
     rm -rf "bin"; \
@@ -39,8 +42,8 @@ RUN set -ex; \
     rm -rf "agent"; \
     mkdir "bin";
 
-COPY ~/oap/log4j2.xml config/
-COPY ~/oap/docker-entrypoint.sh .
+COPY oap/log4j2.xml config/
+COPY oap/docker-entrypoint.sh .
 
 RUN mkdir ext-config; \
     mkdir ext-libs;
