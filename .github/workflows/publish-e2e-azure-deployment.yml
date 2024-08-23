@@ -60,7 +60,7 @@ jobs:
        pwd
        ls -la
        # docker build --build-arg DIST=$DIST -t ghcr.io/keshav8s/skywalking/oap:${{ github.sha }} -f docker/oap/Dockerfile .
-       docker build -f --build-arg DIST=$DIST -t ghcr.io/keshav8s/skywalking/oap:${{ github.sha }} .
+       docker build -f oap/Dockerfile -t ghcr.io/keshav8s/skywalking/oap:${{ github.sha }} .
       
     - name: Push OAP Docker Image
       run: |
