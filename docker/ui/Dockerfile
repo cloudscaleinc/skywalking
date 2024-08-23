@@ -32,8 +32,8 @@ RUN tar -xzf "$DIST" --strip 1; \
     rm -rf "oap-libs"; \
     rm -rf "agent";
 
-COPY docker/ui/docker-entrypoint.sh .
-COPY docker/ui/log4j2.xml webapp/
+COPY docker-entrypoint.sh .
+COPY log4j2.xml webapp/
 
 EXPOSE 8080
 
