@@ -23,7 +23,7 @@ on:
 
 jobs:
   build-and-push:
-    if: github.repository == 'keshav8s/skywalking'
+    if: github.repository == 'Keshav8s/skywalking'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -50,8 +50,8 @@ jobs:
 
     - name: Build and Push Docker Image
       run: |
-        docker build -t ghcr.io/${{ github.actor }}/skywalking:${{ github.sha }} .
-        docker push ghcr.io/${{ github.actor }}/skywalking:${{ github.sha }}
+        docker build -t ghcr.io/keshav8s/skywalking:${{ github.sha }} .
+        docker push ghcr.io/keshav8s/skywalking:${{ github.sha }}
 
   deploy:
     needs: build-and-push
