@@ -134,20 +134,22 @@ jobs:
 
     steps:
       - name: SSH into Azure VM and Deploy
-        uses: appleboy/ssh-action@v0.1.5
-        with:
+        # uses: appleboy/ssh-action@v0.1.5
+        env:
           host: ${{ secrets.VM_IP }}
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
-          port: 22
-          script: |
-            eval $(ssh-agent -s)
-            echo "$key" | base64 --decode | ssh-add -
-          
+        run: |
+          eval $(ssh-agent -s)
+          echo "$key" | base64 --decode | ssh-add -
+        
+
+          ssh -vvv -o StrictHostKeyChecking=no -t $username@$host << 'EOF'
+
             # Pull the latest code
             cd ~/skywalking
             git pull origin skywalking-azure
-          
+            
             cd ~/skywalking/docker
             # Pull the pre-built Docker image from GitHub Container Registry
             docker pull ghcr.io/${{ github.actor }}/skywalking:${{ github.sha }}
@@ -158,3 +160,4 @@ jobs:
             # Run the updated containers
             cd docker
             docker-compose --profile elasticsearch up -d
+          EOF
