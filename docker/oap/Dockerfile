@@ -28,13 +28,7 @@ ENV JAVA_OPTS=" -Xms2G "
 
 ARG DIST
 
-ENV DIST=apache-skywalking-apm-bin.tar.gz
-
 COPY "$DIST" .
-
-# List contents for debugging
-RUN ls -l /skywalking
-
 
 RUN set -ex; \
     tar -xzf "$DIST" --strip 1; \
