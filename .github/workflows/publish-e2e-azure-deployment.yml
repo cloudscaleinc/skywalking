@@ -139,12 +139,13 @@ jobs:
           host: ${{ secrets.VM_IP }}
           username: ${{ secrets.VM_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
+          port: 22
           script: |
-            cd ~/skywalking
             eval $(ssh-agent -s)
             echo "$key" | base64 --decode | ssh-add -
           
             # Pull the latest code
+            cd ~/skywalking
             git pull origin skywalking-azure
           
             cd ~/skywalking/docker
