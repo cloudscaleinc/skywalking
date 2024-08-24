@@ -28,7 +28,7 @@ ENV JAVA_OPTS=" -Xms2G "
 
 ARG DIST
 
-ENV DIST=keshav8s-skywalking-apm-bin.tar.gz
+ENV DIST=apache-skywalking-apm-bin.tar.gz
 
 COPY "$DIST" .
 
