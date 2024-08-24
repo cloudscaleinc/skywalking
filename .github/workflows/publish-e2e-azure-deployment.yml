@@ -86,6 +86,12 @@ jobs:
     - name: Run `make docker` to generate distribution tarball
       run: make docker SKIP_TEST=true
       if: steps.build-cache.outputs.cache-hit != 'true'
+
+    - name: Ensure the tarball exists before building
+      run: ls -l dist/apache-skywalking-apm-bin.tar.gz
+    
+    - name: Copy tarball to the Docker build context
+      run: cp dist/apache-skywalking-apm-bin.tar.gz docker/oap/
     
     - name: Check if OAP Docker Image exists
       id: check-oap-image
@@ -100,8 +106,6 @@ jobs:
 
     - name: Build OAP Docker Image with Cache Support
       run: |
-        # Ensure the tarball exists before building
-        ls -l apache-skywalking-apm-bin.tar.gz
         cd docker/oap
         docker buildx build \
           --cache-from=type=gha \
