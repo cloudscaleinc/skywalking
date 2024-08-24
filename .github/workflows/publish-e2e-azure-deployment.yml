@@ -138,12 +138,14 @@ jobs:
         with:
           host: ${{ secrets.VM_IP }}
           username: ${{ secrets.VM_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
           script: |
             cd ~/skywalking
+            eval $(ssh-agent -s)
+            echo "$SSH_PRIVATE_KEY_BASE64" | base64 --decode | ssh-add -
           
             # Pull the latest code
-            git pull origin main
+            git pull origin skywalking-azure
           
             cd ~/skywalking/docker
             # Pull the pre-built Docker image from GitHub Container Registry
