@@ -121,8 +121,7 @@ jobs:
         docker buildx build \
           --cache-from=type=gha \
           --cache-to=type=gha,mode=max \
-          # --build-arg DIST=$DIST \
-          --file ./ui/Dockerfile \
+          --file ./Dockerfile \
           --tag ghcr.io/keshav8s/skywalking/ui:${{ github.sha }} \
           --push .
 
