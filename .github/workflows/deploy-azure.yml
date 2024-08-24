@@ -19,7 +19,7 @@ name: Deploy to Azure VM
 on:
   push:
     branches:
-      - skywalking-pause
+      - skywalking-azure
 
 jobs:
   deploy:
