@@ -117,13 +117,13 @@ jobs:
       
     - name: Build UI Docker Image with Cache Support
       run: |
-        cd docker
+        cd docker/ui
         docker buildx build \
           --cache-from=type=gha \
           --cache-to=type=gha,mode=max \
-          --build-arg DIST=$DIST \
-          --tag ghcr.io/keshav8s/skywalking/ui:${{ github.sha }} \
+          # --build-arg DIST=$DIST \
           --file ./ui/Dockerfile \
+          --tag ghcr.io/keshav8s/skywalking/ui:${{ github.sha }} \
           --push .
 
     - name: Push UI Docker Image
