@@ -142,7 +142,7 @@ jobs:
           script: |
             cd ~/skywalking
             eval $(ssh-agent -s)
-            echo "$SSH_PRIVATE_KEY_BASE64" | base64 --decode | ssh-add -
+            echo "$key" | base64 --decode | ssh-add -
           
             # Pull the latest code
             git pull origin skywalking-azure
