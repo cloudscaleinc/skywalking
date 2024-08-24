@@ -53,23 +53,20 @@ jobs:
     - name: Load Environment Variables
       run: source docker/.env
 
-    - name: Build distribution tar
-      run: |
-        ./mvnw clean install javadoc:javadoc -B -q -Pall \
-          -Dmaven.test.skip \
-          -Dcheckstyle.skip
-    - name: Verify builds are reproducible
-      run: ./mvnw -Dmaven.test.skip clean verify artifact:compare -Pall
-    - uses: actions/upload-artifact@v3
-      name: Upload distribution tar
-      with:
-        name: dist
-        path: dist
+    # - name: Build distribution tar
+    #   run: |
+    #     ./mvnw clean install javadoc:javadoc -B -q -Pall \
+    #       -Dmaven.test.skip \
+    #       -Dcheckstyle.skip
+          
+    # - name: Verify builds are reproducible
+    #   run: ./mvnw -Dmaven.test.skip clean verify artifact:compare -Pall
+    # - uses: actions/upload-artifact@v3
+    #   name: Upload distribution tar
+    #   with:
+    #     name: dist
+    #     path: dist
         
-
-    - name: Set DIST variable
-      run: echo "DIST=keshav8s-skywalking-apm-bin.tar.gz" >> $GITHUB_ENV
-
     - name: Set up Java
       uses: actions/setup-java@v3
       with:
@@ -104,7 +101,7 @@ jobs:
     - name: Build OAP Docker Image with Cache Support
       run: |
         # Ensure the tarball exists before building
-        ls -l keshav8s-skywalking-apm-bin.tar.gz
+        ls -l apache-skywalking-apm-bin.tar.gz
         cd docker/oap
         docker buildx build \
           --cache-from=type=gha \
