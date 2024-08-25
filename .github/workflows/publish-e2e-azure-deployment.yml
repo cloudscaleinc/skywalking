@@ -50,20 +50,6 @@ jobs:
 
     - name: Load Environment Variables
       run: source docker/.env
-
-    # - name: Build distribution tar
-    #   run: |
-    #     ./mvnw clean install javadoc:javadoc -B -q -Pall \
-    #       -Dmaven.test.skip \
-    #       -Dcheckstyle.skip
-          
-    # - name: Verify builds are reproducible
-    #   run: ./mvnw -Dmaven.test.skip clean verify artifact:compare -Pall
-    # - uses: actions/upload-artifact@v3
-    #   name: Upload distribution tar
-    #   with:
-    #     name: dist
-    #     path: dist
         
     - name: Set up Java
       uses: actions/setup-java@v3
@@ -143,7 +129,6 @@ jobs:
           eval $(ssh-agent -s)
           echo "$key" | base64 --decode | ssh-add -
         
-
           ssh -vvv -o StrictHostKeyChecking=no -t $username@$host << 'EOF'
 
             # Pull the latest code
@@ -154,9 +139,10 @@ jobs:
             # Pull the pre-built Docker image from GitHub Container Registry
             docker pull ghcr.io/${{ github.actor }}/skywalking:${{ github.sha }}
       
-            # Update Docker Compose to use the pulled image
-            sed -i 's|image: .*|image: ghcr.io/${{ github.actor }}/skywalking:${{ github.sha }}|' docker/docker-compose.yml
-  
+            # Update Docker Compose to use the latest OAP and UI images
+            sed -i 's|image: .*oap.*|image: ghcr.io/${{ github.actor }}/skywalking/oap:${{ github.sha }}|' docker-compose.yml
+            sed -i 's|image: .*ui.*|image: ghcr.io/${{ github.actor }}/skywalking/ui:${{ github.sha }}|' docker-compose.yml
+    
             # Run the updated containers
             cd docker
             docker-compose --profile elasticsearch up -d
