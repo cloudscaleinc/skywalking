@@ -142,8 +142,6 @@ jobs:
             # Update Docker Compose to use the latest OAP and UI images
             sed -i 's|image: .*oap.*|image: ghcr.io/${{ github.actor }}/skywalking/oap:${{ github.sha }}|' docker-compose.yml
             sed -i 's|image: .*ui.*|image: ghcr.io/${{ github.actor }}/skywalking/ui:${{ github.sha }}|' docker-compose.yml
-    
-            # Run the updated containers
-            cd docker
+
             docker-compose --profile elasticsearch up -d
           EOF
