@@ -131,20 +131,29 @@ jobs:
           echo "$key" | base64 --decode | ssh-add -
         
           ssh -vvv -o StrictHostKeyChecking=no -t $username@$host << 'EOF'
-
             # Pull the latest code
             cd ~/skywalking
             git pull origin Keshav-poc
             git submodule update --init --recursive
-            
-            cd ~/skywalking/docker
-            # Pull the pre-built Docker image from GitHub Container Registry
-            docker pull ghcr.io/cloudscaleinc/skywalking:${{ github.sha }}
-            docker-compose --profile elasticsearch down
-            
-            # Update Docker Compose to use the latest OAP and UI images
-              sed -i "s|OAP_IMAGE=.*|OAP_IMAGE=ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}|" .env
-              sed -i "s|UI_IMAGE=.*|UI_IMAGE=ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }}|" .env
 
-            docker-compose --profile elasticsearch up -d
+            cd ~/skywalking/docker
+            
+            # Pull the latest Docker images
+            docker pull ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}
+            docker pull ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }}
+
+            # Remove old containers if they exist
+            docker rm -f oap || true
+            docker rm -f ui || true
+            
+            # Run new containers with the updated images
+            docker run -d --name oap \
+              -p 11800:11800 \
+              -p 12800:12800 \
+              ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}
+      
+            docker run -d --name ui \
+              -p 8080:8080 \
+              --link oap:oap \
+              ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }}
           EOF
