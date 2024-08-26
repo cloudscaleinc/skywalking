@@ -14,16 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: CI/CD for SkyWalking with Docker Artifacts
+name: E2E deployment using CI/CD for SkyWalking
 
 on:
   push:
     branches:
-      - poc
+      - skywalking-azure
 
 jobs:
   build-and-push:
-    if: github.repository == 'cloudscaleinc/skywalking'
+    if: github.repository == 'Keshav8s/skywalking'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -39,7 +39,7 @@ jobs:
         submodules: true
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v1
+      uses: docker/setup-buildx-action@v2
 
     - name: Log in to GitHub Container Registry
       uses: docker/login-action@v2
@@ -48,10 +48,71 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build and Push Docker Image
+    - name: Load Environment Variables
+      run: source docker/.env
+        
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        
+    - name: Cache `make docker` output
+      uses: actions/cache@v3
+      with:
+        path: |
+          ./.output-directory
+        key: ${{ runner.os }}-make-docker-${{ hashFiles('**/*') }}
+        restore-keys: |
+          ${{ runner.os }}-make-docker-
+          
+
+    - name: Run `make docker` to generate distribution tarball
+      run: make docker SKIP_TEST=true
+      if: steps.build-cache.outputs.cache-hit != 'true'
+
+    - name: Ensure the tarball exists before building
+      run: ls -l dist/apache-skywalking-apm-bin.tar.gz
+    
+    - name: Copy tarball to the Docker build context
+      run: cp dist/apache-skywalking-apm-bin.tar.gz docker/oap/
+    
+    - name: Check if OAP Docker Image exists
+      id: check-oap-image
       run: |
-        docker build -t ghcr.io/${{ github.actor }}/skywalking:${{ github.sha }} .
-        docker push ghcr.io/${{ github.actor }}/skywalking:${{ github.sha }}
+        if docker pull ghcr.io/keshav8s/skywalking/oap:${{ github.sha }}; then
+          echo "OAP image exists"
+          echo "IMAGE_EXISTS=true" >> $GITHUB_ENV
+        else
+          echo "OAP image does not exist"
+          echo "IMAGE_EXISTS=false" >> $GITHUB_ENV
+        fi
+
+    - name: Build OAP Docker Image with Cache Support
+      run: |
+        cd docker/oap
+        docker buildx build \
+          --cache-from=type=gha \
+          --cache-to=type=gha,mode=max \
+          --file ./Dockerfile \
+          --tag ghcr.io/keshav8s/skywalking/oap:${{ github.sha }} \
+          --push .
+          
+    - name: Push OAP Docker Image
+      run: docker push ghcr.io/keshav8s/skywalking/oap:${{ github.sha }}
+      
+    - name: Build UI Docker Image with Cache Support
+      run: |
+        cd docker/ui
+        docker buildx build \
+          --cache-from=type=gha \
+          --cache-to=type=gha,mode=max \
+          --file ./Dockerfile \
+          --tag ghcr.io/keshav8s/skywalking/ui:${{ github.sha }} \
+          --push .
+
+    - name: Push UI Docker Image
+      run: docker push ghcr.io/keshav8s/skywalking/ui:${{ github.sha }}
 
   deploy:
     needs: build-and-push
@@ -59,21 +120,28 @@ jobs:
 
     steps:
       - name: SSH into Azure VM and Deploy
-        uses: appleboy/ssh-action@v0.1.5
-        with:
-          host: ${{ secrets.VM_HOST }}
+        env:
+          host: ${{ secrets.VM_IP }}
           username: ${{ secrets.VM_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
+          key: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
+        run: |
+          eval $(ssh-agent -s)
+          echo "$key" | base64 --decode | ssh-add -
+        
+          ssh -vvv -o StrictHostKeyChecking=no -t $username@$host << 'EOF'
+
             # Pull the latest code
-            git pull origin main
-  
+            cd ~/skywalking
+            git pull origin skywalking-azure
+            git submodule update --init --recursive
+            
+            cd ~/skywalking/docker
             # Pull the pre-built Docker image from GitHub Container Registry
             docker pull ghcr.io/${{ github.actor }}/skywalking:${{ github.sha }}
-  
-            # Update Docker Compose to use the pulled image
-            sed -i 's|image: .*|image: ghcr.io/${{ github.actor }}/skywalking:${{ github.sha }}|' docker/docker-compose.yml
-  
-            # Run the updated containers
-            cd docker
+      
+            # Update Docker Compose to use the latest OAP and UI images
+            sed -i 's|image: .*oap.*|image: ghcr.io/${{ github.actor }}/skywalking/oap:${{ github.sha }}|' docker/.env
+            sed -i 's|image: .*ui.*|image: ghcr.io/${{ github.actor }}/skywalking/ui:${{ github.sha }}|' docker/.env
+
             docker-compose --profile elasticsearch up -d
+          EOF
