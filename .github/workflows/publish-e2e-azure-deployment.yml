@@ -19,11 +19,11 @@ name: E2E deployment using CI/CD for SkyWalking
 on:
   push:
     branches:
-      - skywalking-azure
+      - Keshav-po
 
 jobs:
   build-and-push:
-    if: github.repository == 'Keshav8s/skywalking'
+    if: github.repository == 'cloudscaleinc/skywalking'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -80,7 +80,7 @@ jobs:
     - name: Check if OAP Docker Image exists
       id: check-oap-image
       run: |
-        if docker pull ghcr.io/keshav8s/skywalking/oap:${{ github.sha }}; then
+        if docker pull ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}; then
           echo "OAP image exists"
           echo "IMAGE_EXISTS=true" >> $GITHUB_ENV
         else
@@ -95,11 +95,11 @@ jobs:
           --cache-from=type=gha \
           --cache-to=type=gha,mode=max \
           --file ./Dockerfile \
-          --tag ghcr.io/keshav8s/skywalking/oap:${{ github.sha }} \
+          --tag ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }} \
           --push .
           
     - name: Push OAP Docker Image
-      run: docker push ghcr.io/keshav8s/skywalking/oap:${{ github.sha }}
+      run: docker push ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}
       
     - name: Build UI Docker Image with Cache Support
       run: |
@@ -108,11 +108,11 @@ jobs:
           --cache-from=type=gha \
           --cache-to=type=gha,mode=max \
           --file ./Dockerfile \
-          --tag ghcr.io/keshav8s/skywalking/ui:${{ github.sha }} \
+          --tag ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }} \
           --push .
 
     - name: Push UI Docker Image
-      run: docker push ghcr.io/keshav8s/skywalking/ui:${{ github.sha }}
+      run: docker push ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }}
 
   deploy:
     needs: build-and-push
