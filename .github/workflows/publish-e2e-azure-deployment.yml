@@ -19,7 +19,7 @@ name: E2E deployment using CI/CD for SkyWalking
 on:
   push:
     branches:
-      - Keshav-po
+      - Keshav-poc
 
 jobs:
   build-and-push:
@@ -46,7 +46,7 @@ jobs:
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ secrets.GHCR_TOKEN }}
 
     - name: Load Environment Variables
       run: source docker/.env
@@ -66,7 +66,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-make-docker-
           
-
     - name: Run `make docker` to generate distribution tarball
       run: make docker SKIP_TEST=true
       if: steps.build-cache.outputs.cache-hit != 'true'
@@ -92,8 +91,6 @@ jobs:
       run: |
         cd docker/oap
         docker buildx build \
-          --cache-from=type=gha \
-          --cache-to=type=gha,mode=max \
           --file ./Dockerfile \
           --tag ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }} \
           --push .
@@ -105,8 +102,6 @@ jobs:
       run: |
         cd docker/ui
         docker buildx build \
-          --cache-from=type=gha \
-          --cache-to=type=gha,mode=max \
           --file ./Dockerfile \
           --tag ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }} \
           --push .
