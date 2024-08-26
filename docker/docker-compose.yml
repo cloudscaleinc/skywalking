@@ -60,7 +60,7 @@ services:
 
   oap-base: &oap-base
     profiles: [ "none" ]
-    image: ${OAP_IMAGE:-ghcr.io/apache/skywalking/oap:latest}
+    image: ${OAP_IMAGE:-ghcr.io/cloudscaleinc/skywalking/oap:latest}
     ports:
       - "11800:11800"
       - "12800:12800"
@@ -104,7 +104,7 @@ services:
       SW_STORAGE_BANYANDB_TARGETS: banyandb:17912
 
   ui:
-    image: ${UI_IMAGE:-ghcr.io/apache/skywalking/ui:latest}
+    image: ${UI_IMAGE:-ghcr.io/cloudscaleinc/skywalking/ui:latest}
     container_name: ui
     ports:
       - "8080:8080"
