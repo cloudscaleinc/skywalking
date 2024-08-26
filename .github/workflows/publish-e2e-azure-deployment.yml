@@ -134,7 +134,7 @@ jobs:
 
             # Pull the latest code
             cd ~/skywalking
-            git pull origin skywalking-azure
+            git pull origin Keshav-poc
             git submodule update --init --recursive
             
             cd ~/skywalking/docker
@@ -143,8 +143,8 @@ jobs:
             docker-compose --profile elasticsearch down
             
             # Update Docker Compose to use the latest OAP and UI images
-            sed -i 's|OAP_IMAGE=.*|OAP_IMAGE=ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}|' docker/.env
-            sed -i 's|UI_IMAGE=.*|UI_IMAGE=ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }}|' docker/.env
+            sed -i 's|image: ghcr.io/cloudscaleinc/skywalking/oap:latest|image: ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}|' docker/docker-compose.yml
+            sed -i 's|image: ghcr.io/cloudscaleinc/skywalking/ui:latest|image: ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }}|' docker/docker-compose.yml
 
             docker-compose --profile elasticsearch up -d
           EOF
