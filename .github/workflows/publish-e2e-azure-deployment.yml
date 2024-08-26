@@ -143,8 +143,8 @@ jobs:
             docker-compose --profile elasticsearch down
             
             # Update Docker Compose to use the latest OAP and UI images
-            sed -i 's|image: ghcr.io/cloudscaleinc/skywalking/oap:latest|image: ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}|' docker/docker-compose.yml
-            sed -i 's|image: ghcr.io/cloudscaleinc/skywalking/ui:latest|image: ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }}|' docker/docker-compose.yml
+            sed -i 's|image: ghcr.io/cloudscaleinc/skywalking/oap:latest|image: ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}|' docker-compose.yml
+            sed -i 's|image: ghcr.io/cloudscaleinc/skywalking/ui:latest|image: ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }}|' docker-compose.yml
 
             docker-compose --profile elasticsearch up -d
           EOF
