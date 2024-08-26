@@ -120,7 +120,6 @@ jobs:
 
     steps:
       - name: SSH into Azure VM and Deploy
-        # uses: appleboy/ssh-action@v0.1.5
         env:
           host: ${{ secrets.VM_IP }}
           username: ${{ secrets.VM_USER }}
@@ -134,14 +133,15 @@ jobs:
             # Pull the latest code
             cd ~/skywalking
             git pull origin skywalking-azure
+            git submodule update --init --recursive
             
             cd ~/skywalking/docker
             # Pull the pre-built Docker image from GitHub Container Registry
             docker pull ghcr.io/${{ github.actor }}/skywalking:${{ github.sha }}
       
             # Update Docker Compose to use the latest OAP and UI images
-            sed -i 's|image: .*oap.*|image: ghcr.io/${{ github.actor }}/skywalking/oap:${{ github.sha }}|' docker-compose.yml
-            sed -i 's|image: .*ui.*|image: ghcr.io/${{ github.actor }}/skywalking/ui:${{ github.sha }}|' docker-compose.yml
+            sed -i 's|image: .*oap.*|image: ghcr.io/${{ github.actor }}/skywalking/oap:${{ github.sha }}|' docker/.env
+            sed -i 's|image: .*ui.*|image: ghcr.io/${{ github.actor }}/skywalking/ui:${{ github.sha }}|' docker/.env
 
             docker-compose --profile elasticsearch up -d
           EOF
