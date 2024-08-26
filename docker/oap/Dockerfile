@@ -26,7 +26,9 @@ WORKDIR $SKYWALKING_HOME
 
 ENV JAVA_OPTS=" -Xms2G "
 
-ARG DIST
+ARG DIST=apache-skywalking-apm-bin.tar.gz
+
+ENV DIST=$DIST
 
 COPY "$DIST" .
 
