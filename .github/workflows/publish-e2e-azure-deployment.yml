@@ -139,12 +139,12 @@ jobs:
             
             cd ~/skywalking/docker
             # Pull the pre-built Docker image from GitHub Container Registry
-            docker pull ghcr.io/${{ github.actor }}/skywalking:${{ github.sha }}
+            docker pull ghcr.io/cloudscaleinc/skywalking:${{ github.sha }}
             docker-compose --profile elasticsearch down
             
             # Update Docker Compose to use the latest OAP and UI images
-            sed -i 's|OAP_IMAGE=.*|OAP_IMAGE=ghcr.io/${{ github.actor }}/skywalking/oap:${{ github.sha }}|' docker/.env
-            sed -i 's|UI_IMAGE=.*|UI_IMAGE=ghcr.io/${{ github.actor }}/skywalking/ui:${{ github.sha }}|' docker/.env
+            sed -i 's|OAP_IMAGE=.*|OAP_IMAGE=ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}|' docker/.env
+            sed -i 's|UI_IMAGE=.*|UI_IMAGE=ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }}|' docker/.env
 
             docker-compose --profile elasticsearch up -d
           EOF
