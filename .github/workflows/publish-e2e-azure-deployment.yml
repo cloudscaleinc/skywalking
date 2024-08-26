@@ -87,14 +87,17 @@ jobs:
           echo "IMAGE_EXISTS=false" >> $GITHUB_ENV
         fi
 
-    - name: Build OAP Docker Image with Cache Support
+    - name: Build OAP Docker Image
       run: |
         cd docker/oap
         docker buildx build \
           --file ./Dockerfile \
           --tag ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }} \
           --push .
-          
+    - name: Log Image Tags
+      run: |
+         echo "OAP Image Tag: ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}"
+
     - name: Push OAP Docker Image
       run: docker push ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}
       
@@ -105,6 +108,10 @@ jobs:
           --file ./Dockerfile \
           --tag ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }} \
           --push .
+
+    - name: Log Image Tags
+      run: |
+        echo "UI Image Tag: ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }}"
 
     - name: Push UI Docker Image
       run: docker push ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }}
@@ -133,7 +140,8 @@ jobs:
             cd ~/skywalking/docker
             # Pull the pre-built Docker image from GitHub Container Registry
             docker pull ghcr.io/${{ github.actor }}/skywalking:${{ github.sha }}
-      
+            docker-compose --profile elasticsearch down
+            
             # Update Docker Compose to use the latest OAP and UI images
             sed -i 's|image: .*oap.*|image: ghcr.io/${{ github.actor }}/skywalking/oap:${{ github.sha }}|' docker/.env
             sed -i 's|image: .*ui.*|image: ghcr.io/${{ github.actor }}/skywalking/ui:${{ github.sha }}|' docker/.env
