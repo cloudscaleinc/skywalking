@@ -138,22 +138,16 @@ jobs:
 
             cd ~/skywalking/docker
             
-            # Pull the latest Docker images
-            docker pull ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}
-            docker pull ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }}
-
-            # Remove old containers if they exist
-            docker rm -f oap || true
-            docker rm -f ui || true
-            
-            # Run new containers with the updated images
-            docker run -d --name oap \
-              -p 11800:11800 \
-              -p 12800:12800 \
-              ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}
+            export OAP_IMAGE=ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}
+            export UI_IMAGE=ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }}
       
-            docker run -d --name ui \
-              -p 8080:8080 \
-              --link oap:oap \
-              ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }}
+            # Pull the latest images
+            docker pull $OAP_IMAGE
+            docker pull $UI_IMAGE
+      
+            # Update Docker Compose and start containers
+            cd ~/skywalking/docker
+            docker-compose --profile elasticsearch down
+            docker-compose --profile elasticsearch up -d
+            
           EOF
