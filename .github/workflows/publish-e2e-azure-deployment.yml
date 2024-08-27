@@ -180,7 +180,7 @@ jobs:
 
   dist-tar:
     name: Build dist tar
-    needs: [changes]
+    needs: [build-and-push]
     runs-on: ubuntu-latest
     if: needs.changes.outputs.oap == 'true'
     steps:
@@ -203,7 +203,7 @@ jobs:
 
   docker:
     name: Docker images
-    needs: [dist-tar]
+    needs: [dist-tar,changes,determine-version]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -261,7 +261,7 @@ jobs:
           docker push ghcr.io/cloudscaleinc/skywalking/ui:$VERSION
 
   deploy:
-    needs: [build-and-push, push-docker]
+    needs: [docker, push-docker]
     runs-on: ubuntu-latest
     steps:
     - name: SSH into Azure VM and Deploy
@@ -282,8 +282,8 @@ jobs:
           cd ~/skywalking/docker
           # Pull the pre-built Docker images from GitHub Container Registry
           VERSION=$(cat version.txt)
-          docker pull ghcr.io/${{ github.actor }}/skywalking/oap:$VERSION
-          docker pull ghcr.io/${{ github.actor }}/skywalking/ui:$VERSION
+          docker pull ghcr.io/cloudscaleinc}/skywalking/oap:$VERSION
+          docker pull ghcr.io/cloudscaleinc/skywalking/ui:$VERSION
   
           # Update Docker Compose to use the latest OAP and UI images
           sed -i 's|image: .*oap.*|image: ghcr.io/cloudscaleinc/skywalking/oap:$VERSION|' docker/.env
