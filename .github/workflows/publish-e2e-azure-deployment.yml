@@ -48,62 +48,12 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GHCR_TOKEN }}
 
-    # - name: Determine Docker Image Version
-    #   id: determine-version
-    #   run: |
-    #     if [ -f version.txt ]; then
-    #       VERSION=$(cat version.txt)
-    #     else
-    #       VERSION=$(date +"%Y.%m.%d.%H%M%S")  # Generate version based on timestamp
-    #     fi
-    #     echo "VERSION=$VERSION" >> $GITHUB_ENV
-    #   shell: bash
-
     - name: Set up Java
       uses: actions/setup-java@v3
       with:
         java-version: '11'
         distribution: 'temurin'
         
-    # - name: Cache `make docker` output
-    #   uses: actions/cache@v3
-    #   with:
-    #     path: ./dist
-    #     key: ${{ runner.os }}-make-docker-${{ hashFiles('**/*') }}
-    #     restore-keys: |
-    #       ${{ runner.os }}-make-docker-
-          
-    # - name: Run `make docker` to generate distribution tarball
-    #   if: steps.build-cache.outputs.cache-hit != 'true'
-    #   run: |
-    #     git submodule init
-    #     git submodule update
-    #     make docker SKIP_TEST=true
-
-    # - name: Ensure the tarball exists before building
-    #   run: ls -l dist/apache-skywalking-apm-bin.tar.gz
-    
-    # - name: Copy tarball to the Docker build context
-    #   run: cp dist/apache-skywalking-apm-bin.tar.gz docker/oap/
-    
-    # - name: Build and Push OAP Docker Image
-    #   run: |
-    #     cd docker/oap
-    #     docker buildx build \
-    #       --file ./Dockerfile \
-    #       --tag ghcr.io/cloudscaleinc/skywalking/oap:${{ env.VERSION }} \
-    #       --tag ghcr.io/cloudscaleinc/skywalking/oap:latest \
-    #       --push .
-
-    # - name: Build and Push UI Docker Image
-    #   run: |
-    #     cd docker/ui
-    #     docker buildx build \
-    #       --file ./Dockerfile \
-    #       --tag ghcr.io/cloudscaleinc/skywalking/ui:${{ env.VERSION }} \
-    #       --tag ghcr.io/cloudscaleinc/skywalking/ui:latest \
-    #       --push .
-
   determine-version:
     needs: [build-and-push]
     runs-on: ubuntu-latest
@@ -180,9 +130,9 @@ jobs:
 
   dist-tar:
     name: Build dist tar
-    needs: [build-and-push]
+    needs: [changes]
     runs-on: ubuntu-latest
-    if: needs.changes.outputs.oap == 'true'
+    # if: needs.changes.outputs.oap == 'true'
     steps:
       - uses: actions/checkout@v3
         with:
@@ -203,7 +153,7 @@ jobs:
 
   docker:
     name: Docker images
-    needs: [dist-tar,changes,determine-version]
+    needs: [dist-tar]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -261,7 +211,7 @@ jobs:
           docker push ghcr.io/cloudscaleinc/skywalking/ui:$VERSION
 
   deploy:
-    needs: [docker, push-docker]
+    needs: [push-docker]
     runs-on: ubuntu-latest
     steps:
     - name: SSH into Azure VM and Deploy
