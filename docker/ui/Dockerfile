@@ -20,10 +20,11 @@ ENV JAVA_OPTS=" -Xms256M " \
     SW_OAP_ADDRESS="http://127.0.0.1:12800" \
     SW_ZIPKIN_ADDRESS="http://127.0.0.1:9412"
 
-WORKDIR skywalking
+WORKDIR skywalking/skywalking-ui
 
-ARG DIST
-COPY "$DIST" .
+ARG DIST=apache-skywalking-apm-bin.tar.gz
+
+ENV DIST=$DIST
 
 RUN tar -xzf "$DIST" --strip 1; \
     rm -rf "$DIST"; \
