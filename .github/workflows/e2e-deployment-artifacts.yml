@@ -44,20 +44,23 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
         
-    - name: Cache `make docker` output
+    - name: Cache and Build Docker
       uses: actions/cache@v3
+      id: build-cache
       with:
         path: ./dist
         key: ${{ runner.os }}-make-docker-${{ hashFiles('**/*') }}
         restore-keys: |
           ${{ runner.os }}-make-docker-
-          
+    
     - name: Run `make docker` to generate distribution tarball
-      if: steps.build-cache.outputs.cache-hit != 'true'
       run: |
-        git submodule init
-        git submodule update
-        make docker SKIP_TEST=true
+        if [ "${{ steps.build-cache.outputs.cache-hit }}" != "true" ]; then
+          git submodule init
+          git submodule update
+          make docker SKIP_TEST=true
+        fi
+
 
     - name: Ensure the tarball exists before building
       run: ls -l dist/apache-skywalking-apm-bin.tar.gz
@@ -72,6 +75,7 @@ jobs:
           --file ./Dockerfile \
           --tag cloudscaleinc/skywalking/oap:${{ env.TAG }} \
           --output type=docker,dest=./oap-image.tar
+          -- .
 
     - name: Build UI Docker Image
       run: |
@@ -80,6 +84,7 @@ jobs:
           --file ./Dockerfile \
           --tag cloudscaleinc/skywalking/ui:${{ env.TAG }} \
           --output type=docker,dest=./ui-image.tar
+          -- .
 
     - name: Upload Docker Images as Artifacts
       uses: actions/upload-artifact@v3
