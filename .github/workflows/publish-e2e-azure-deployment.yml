@@ -105,6 +105,7 @@ jobs:
     #       --push .
 
   determine-version:
+    needs: [build-and-push]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -147,6 +148,7 @@ jobs:
           path: version.txt
 
   changes:
+    needs: [build-and-push]
     name: Check changes
     runs-on: ubuntu-latest
     outputs:
@@ -234,58 +236,58 @@ jobs:
           path: docker-images-skywalking-*.tar
 
   push-docker:
-    name: Push Docker images to GHCR
+    name: Push Docker Images to GHCR
     needs: [docker]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v3
-        name: Download docker images
+        name: Download docker images (OAP)
         with:
           name: docker-images-11
           path: docker-images-11/
       - uses: actions/download-artifact@v3
-        name: Download docker images
+        name: Download docker images (UI)
         with:
           name: docker-images-17
           path: docker-images-17/
-      - name: Load and push Docker images
+      - name: Load and Push Docker Images
         run: |
+          VERSION=$(cat version.txt)
           docker load -i docker-images-11/docker-images-skywalking-oap.tar
           docker load -i docker-images-11/docker-images-skywalking-ui.tar
-          docker tag skywalking/oap:latest ghcr.io/cloudscaleinc/skywalking/oap:latest
-          docker tag skywalking/ui:latest ghcr.io/cloudscaleinc/skywalking/ui:latest
-          docker push ghcr.io/cloudscaleinc/skywalking/oap:latest
-          docker push ghcr.io/cloudscaleinc/skywalking/ui:latest
+          docker tag skywalking/oap:latest ghcr.io/cloudscaleinc/skywalking/oap:$VERSION
+          docker tag skywalking/ui:latest ghcr.io/cloudscaleinc/skywalking/ui:$VERSION
+          docker push ghcr.io/cloudscaleinc/skywalking/oap:$VERSION
+          docker push ghcr.io/cloudscaleinc/skywalking/ui:$VERSION
 
   deploy:
-    needs: build-and-push
+    needs: [build-and-push, push-docker]
     runs-on: ubuntu-latest
-
     steps:
-      - name: SSH into Azure VM and Deploy
-        env:
-          host: ${{ secrets.VM_IP }}
-          username: ${{ secrets.VM_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
-        run: |
-          eval $(ssh-agent -s)
-          echo "$key" | base64 --decode | ssh-add -
+    - name: SSH into Azure VM and Deploy
+      env:
+        host: ${{ secrets.VM_IP }}
+        username: ${{ secrets.VM_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
+      run: |
+        eval $(ssh-agent -s)
+        echo "$key" | base64 --decode | ssh-add -
         
-          ssh -vvv -o StrictHostKeyChecking=no -t $username@$host << 'EOF'
-            # Pull the latest code
-            cd ~/skywalking
-            git pull origin Keshav-poc
-            git submodule update --init --recursive
-
-            cd ~/skywalking/docker
-            docker-compose --profile elasticsearch down
-            
-            export OAP_IMAGE=ghcr.io/cloudscaleinc/skywalking/oap:${{ env.VERSION }}
-            export UI_IMAGE=ghcr.io/cloudscaleinc/skywalking/ui:${{ env.VERSION }}
-      
-            docker pull $OAP_IMAGE || docker pull ghcr.io/cloudscaleinc/skywalking/oap:latest
-            docker pull $UI_IMAGE || docker pull ghcr.io/cloudscaleinc/skywalking/ui:latest
-      
-            docker-compose --profile elasticsearch up -d
-            
-          EOF
+        ssh -vvv -o StrictHostKeyChecking=no -t $username@$host << 'EOF'
+          # Pull the latest code
+          cd ~/skywalking
+          git pull origin skywalking-azure
+          git submodule update --init --recursive
+          
+          cd ~/skywalking/docker
+          # Pull the pre-built Docker images from GitHub Container Registry
+          VERSION=$(cat version.txt)
+          docker pull ghcr.io/${{ github.actor }}/skywalking/oap:$VERSION
+          docker pull ghcr.io/${{ github.actor }}/skywalking/ui:$VERSION
+  
+          # Update Docker Compose to use the latest OAP and UI images
+          sed -i 's|image: .*oap.*|image: ghcr.io/cloudscaleinc/skywalking/oap:$VERSION|' docker/.env
+          sed -i 's|image: .*ui.*|image: ghcr.io/cloudscaleinc/skywalking/ui:$VERSION|' docker/.env
+  
+          docker-compose --profile elasticsearch up -d
+        EOF
