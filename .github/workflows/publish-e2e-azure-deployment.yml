@@ -19,7 +19,7 @@ name: E2E deployment using CI/CD for SkyWalking
 on:
   push:
     branches:
-      - Keshav-po
+      - Keshav-poc
 
 jobs:
   build-and-push:
@@ -48,16 +48,16 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GHCR_TOKEN }}
 
-    - name: Determine Docker Image Version
-      id: determine-version
-      run: |
-        if [ -f version.txt ]; then
-          VERSION=$(cat version.txt)
-        else
-          VERSION=$(date +"%Y.%m.%d.%H%M%S")  # Generate version based on timestamp
-        fi
-        echo "VERSION=$VERSION" >> $GITHUB_ENV
-      shell: bash
+    # - name: Determine Docker Image Version
+    #   id: determine-version
+    #   run: |
+    #     if [ -f version.txt ]; then
+    #       VERSION=$(cat version.txt)
+    #     else
+    #       VERSION=$(date +"%Y.%m.%d.%H%M%S")  # Generate version based on timestamp
+    #     fi
+    #     echo "VERSION=$VERSION" >> $GITHUB_ENV
+    #   shell: bash
 
     - name: Set up Java
       uses: actions/setup-java@v3
@@ -65,45 +65,197 @@ jobs:
         java-version: '11'
         distribution: 'temurin'
         
-    - name: Cache `make docker` output
-      uses: actions/cache@v3
-      with:
-        path: ./dist
-        key: ${{ runner.os }}-make-docker-${{ hashFiles('**/*') }}
-        restore-keys: |
-          ${{ runner.os }}-make-docker-
+    # - name: Cache `make docker` output
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: ./dist
+    #     key: ${{ runner.os }}-make-docker-${{ hashFiles('**/*') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-make-docker-
           
-    - name: Run `make docker` to generate distribution tarball
-      if: steps.build-cache.outputs.cache-hit != 'true'
-      run: |
-        git submodule init
-        git submodule update
-        make docker SKIP_TEST=true
+    # - name: Run `make docker` to generate distribution tarball
+    #   if: steps.build-cache.outputs.cache-hit != 'true'
+    #   run: |
+    #     git submodule init
+    #     git submodule update
+    #     make docker SKIP_TEST=true
 
-
-    - name: Ensure the tarball exists before building
-      run: ls -l dist/apache-skywalking-apm-bin.tar.gz
+    # - name: Ensure the tarball exists before building
+    #   run: ls -l dist/apache-skywalking-apm-bin.tar.gz
     
-    - name: Copy tarball to the Docker build context
-      run: cp dist/apache-skywalking-apm-bin.tar.gz docker/oap/
+    # - name: Copy tarball to the Docker build context
+    #   run: cp dist/apache-skywalking-apm-bin.tar.gz docker/oap/
     
-    - name: Build and Push OAP Docker Image
-      run: |
-        cd docker/oap
-        docker buildx build \
-          --file ./Dockerfile \
-          --tag ghcr.io/cloudscaleinc/skywalking/oap:${{ env.VERSION }} \
-          --tag ghcr.io/cloudscaleinc/skywalking/oap:latest \
-          --push .
+    # - name: Build and Push OAP Docker Image
+    #   run: |
+    #     cd docker/oap
+    #     docker buildx build \
+    #       --file ./Dockerfile \
+    #       --tag ghcr.io/cloudscaleinc/skywalking/oap:${{ env.VERSION }} \
+    #       --tag ghcr.io/cloudscaleinc/skywalking/oap:latest \
+    #       --push .
 
-    - name: Build and Push UI Docker Image
-      run: |
-        cd docker/ui
-        docker buildx build \
-          --file ./Dockerfile \
-          --tag ghcr.io/cloudscaleinc/skywalking/ui:${{ env.VERSION }} \
-          --tag ghcr.io/cloudscaleinc/skywalking/ui:latest \
-          --push .
+    # - name: Build and Push UI Docker Image
+    #   run: |
+    #     cd docker/ui
+    #     docker buildx build \
+    #       --file ./Dockerfile \
+    #       --tag ghcr.io/cloudscaleinc/skywalking/ui:${{ env.VERSION }} \
+    #       --tag ghcr.io/cloudscaleinc/skywalking/ui:latest \
+    #       --push .
+
+  determine-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up versioning
+        id: versioning
+        run: |
+          if [ ! -f version.txt ]; then
+            echo "a0.0.0" > version.txt
+          fi
+
+          # Extract current version
+          VERSION=$(cat version.txt)
+          MAJOR=$(echo $VERSION | cut -d'.' -f1)
+          MINOR=$(echo $VERSION | cut -d'.' -f2)
+          PATCH=$(echo $VERSION | cut -d'.' -f3)
+
+          # Increment version logic
+          if [ $PATCH -lt 9 ]; then
+            PATCH=$((PATCH + 1))
+          else
+            PATCH=0
+            if [ $MINOR -lt 9 ]; then
+              MINOR=$((MINOR + 1))
+            else
+              MINOR=0
+              MAJOR=$(echo $MAJOR | tr "0-9" "1-9a")
+            fi
+          fi
+
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo $NEW_VERSION > version.txt
+          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
+      - name: Save updated version to artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: version-file
+          path: version.txt
+
+  changes:
+    name: Check changes
+    runs-on: ubuntu-latest
+    outputs:
+      oap: ${{ steps.filter-oap.outputs.any_modified }}
+      pom: ${{ steps.filter-pom.outputs.any_modified }}
+      ui: ${{ steps.filter-ui.outputs.any_modified }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Filter OAP
+        id: filter-oap
+        uses: tj-actions/changed-files@v43.0.0
+        with:
+          files: |
+            **/oap/**
+      - name: Filter POM
+        id: filter-pom
+        uses: tj-actions/changed-files@v43.0.0
+        with:
+          files: |
+            **/pom.xml
+      - name: Filter UI
+        id: filter-ui
+        uses: tj-actions/changed-files@v43.0.0
+        with:
+          files: |
+            skywalking-ui/**
+
+  dist-tar:
+    name: Build dist tar
+    needs: [changes]
+    runs-on: ubuntu-latest
+    if: needs.changes.outputs.oap == 'true'
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "11"
+          cache: "maven"
+      - name: Build distribution tar
+        run: |
+          ./mvnw clean install javadoc:javadoc -B -q -Pall -Dmaven.test.skip -Dcheckstyle.skip
+      - name: Upload distribution tar
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist
+
+  docker:
+    name: Docker images
+    needs: [dist-tar]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java-version: [11, 17]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - uses: actions/download-artifact@v3
+        name: Download distribution tar
+        with:
+          name: dist
+          path: dist
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java-version }}
+      - name: Build and save docker images
+        env:
+          SW_OAP_BASE_IMAGE: eclipse-temurin:${{ matrix.java-version }}-jre
+        run: |
+          make docker.all || make docker.all
+          docker save -o docker-images-skywalking-oap.tar skywalking/oap:latest
+          docker save -o docker-images-skywalking-ui.tar skywalking/ui:latest
+      - name: Upload docker images as artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker-images-${{ matrix.java-version }}
+          path: docker-images-skywalking-*.tar
+
+  push-docker:
+    name: Push Docker images to GHCR
+    needs: [docker]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        name: Download docker images
+        with:
+          name: docker-images-11
+          path: docker-images-11/
+      - uses: actions/download-artifact@v3
+        name: Download docker images
+        with:
+          name: docker-images-17
+          path: docker-images-17/
+      - name: Load and push Docker images
+        run: |
+          docker load -i docker-images-11/docker-images-skywalking-oap.tar
+          docker load -i docker-images-11/docker-images-skywalking-ui.tar
+          docker tag skywalking/oap:latest ghcr.io/cloudscaleinc/skywalking/oap:latest
+          docker tag skywalking/ui:latest ghcr.io/cloudscaleinc/skywalking/ui:latest
+          docker push ghcr.io/cloudscaleinc/skywalking/oap:latest
+          docker push ghcr.io/cloudscaleinc/skywalking/ui:latest
 
   deploy:
     needs: build-and-push
