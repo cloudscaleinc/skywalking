@@ -55,25 +55,25 @@ jobs:
         distribution: 'temurin'
         
   determine-version:
-    needs: [build-and-push]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
+  
       - name: Set up versioning
         id: versioning
         run: |
+          # Ensure the version.txt file exists, otherwise create it
           if [ ! -f version.txt ]; then
             echo "a0.0.0" > version.txt
           fi
-
+  
           # Extract current version
           VERSION=$(cat version.txt)
           MAJOR=$(echo $VERSION | cut -d'.' -f1)
           MINOR=$(echo $VERSION | cut -d'.' -f2)
           PATCH=$(echo $VERSION | cut -d'.' -f3)
-
+  
           # Increment version logic
           if [ $PATCH -lt 9 ]; then
             PATCH=$((PATCH + 1))
@@ -86,10 +86,11 @@ jobs:
               MAJOR=$(echo $MAJOR | tr "0-9" "1-9a")
             fi
           fi
-
+  
           NEW_VERSION="$MAJOR.$MINOR.$PATCH"
           echo $NEW_VERSION > version.txt
           echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
 
       - name: Save updated version to artifact
         uses: actions/upload-artifact@v3
@@ -187,7 +188,7 @@ jobs:
 
   push-docker:
     name: Push Docker Images to GHCR
-    needs: [docker]
+    needs: [docker,determine-version]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v3
