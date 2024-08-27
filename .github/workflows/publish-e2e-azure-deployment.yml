@@ -122,16 +122,14 @@ jobs:
             git submodule update --init --recursive
 
             cd ~/skywalking/docker
+            docker-compose --profile elasticsearch down
             
             export OAP_IMAGE=ghcr.io/cloudscaleinc/skywalking/oap:${{ env.VERSION }}
             export UI_IMAGE=ghcr.io/cloudscaleinc/skywalking/ui:${{ env.VERSION }}
       
-            # Pull the latest images with fallback to latest tag
             docker pull $OAP_IMAGE || docker pull ghcr.io/cloudscaleinc/skywalking/oap:latest
             docker pull $UI_IMAGE || docker pull ghcr.io/cloudscaleinc/skywalking/ui:latest
       
-            # Update Docker Compose and start containers
-            docker-compose --profile elasticsearch down
             docker-compose --profile elasticsearch up -d
             
           EOF
