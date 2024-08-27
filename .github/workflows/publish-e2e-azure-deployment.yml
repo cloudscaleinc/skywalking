@@ -51,8 +51,13 @@ jobs:
     - name: Determine Docker Image Version
       id: determine-version
       run: |
-        VERSION=$(cat version.txt)  # Assuming you store version in version.txt, or change to another method
+        if [ -f version.txt ]; then
+          VERSION=$(cat version.txt)
+        else
+          VERSION=$(date +"%Y.%m.%d.%H%M%S")  # Generate version based on timestamp
+        fi
         echo "VERSION=$VERSION" >> $GITHUB_ENV
+      shell: bash
 
     - name: Set up Java
       uses: actions/setup-java@v3
