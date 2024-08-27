@@ -48,9 +48,12 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GHCR_TOKEN }}
 
-    - name: Load Environment Variables
-      run: source docker/.env
-        
+    - name: Determine Docker Image Version
+      id: determine-version
+      run: |
+        VERSION=$(cat version.txt)  # Assuming you store version in version.txt, or change to another method
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+
     - name: Set up Java
       uses: actions/setup-java@v3
       with:
@@ -60,8 +63,7 @@ jobs:
     - name: Cache `make docker` output
       uses: actions/cache@v3
       with:
-        path: |
-          ./.output-directory
+        path: ./dist
         key: ${{ runner.os }}-make-docker-${{ hashFiles('**/*') }}
         restore-keys: |
           ${{ runner.os }}-make-docker-
@@ -76,45 +78,23 @@ jobs:
     - name: Copy tarball to the Docker build context
       run: cp dist/apache-skywalking-apm-bin.tar.gz docker/oap/
     
-    - name: Check if OAP Docker Image exists
-      id: check-oap-image
-      run: |
-        if docker pull ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}; then
-          echo "OAP image exists"
-          echo "IMAGE_EXISTS=true" >> $GITHUB_ENV
-        else
-          echo "OAP image does not exist"
-          echo "IMAGE_EXISTS=false" >> $GITHUB_ENV
-        fi
-
-    - name: Build OAP Docker Image
+    - name: Build and Push OAP Docker Image
       run: |
         cd docker/oap
         docker buildx build \
           --file ./Dockerfile \
-          --tag ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }} \
+          --tag ghcr.io/cloudscaleinc/skywalking/oap:${{ env.VERSION }} \
+          --tag ghcr.io/cloudscaleinc/skywalking/oap:latest \
           --push .
-    - name: Log Image Tags
-      run: |
-         echo "OAP Image Tag: ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}"
 
-    - name: Push OAP Docker Image
-      run: docker push ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}
-      
-    - name: Build UI Docker Image with Cache Support
+    - name: Build and Push UI Docker Image
       run: |
         cd docker/ui
         docker buildx build \
           --file ./Dockerfile \
-          --tag ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }} \
+          --tag ghcr.io/cloudscaleinc/skywalking/ui:${{ env.VERSION }} \
+          --tag ghcr.io/cloudscaleinc/skywalking/ui:latest \
           --push .
-
-    - name: Log Image Tags
-      run: |
-        echo "UI Image Tag: ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }}"
-
-    - name: Push UI Docker Image
-      run: docker push ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }}
 
   deploy:
     needs: build-and-push
@@ -138,15 +118,14 @@ jobs:
 
             cd ~/skywalking/docker
             
-            export OAP_IMAGE=ghcr.io/cloudscaleinc/skywalking/oap:${{ github.sha }}
-            export UI_IMAGE=ghcr.io/cloudscaleinc/skywalking/ui:${{ github.sha }}
+            export OAP_IMAGE=ghcr.io/cloudscaleinc/skywalking/oap:${{ env.VERSION }}
+            export UI_IMAGE=ghcr.io/cloudscaleinc/skywalking/ui:${{ env.VERSION }}
       
-            # Pull the latest images
-            docker pull $OAP_IMAGE
-            docker pull $UI_IMAGE
+            # Pull the latest images with fallback to latest tag
+            docker pull $OAP_IMAGE || docker pull ghcr.io/cloudscaleinc/skywalking/oap:latest
+            docker pull $UI_IMAGE || docker pull ghcr.io/cloudscaleinc/skywalking/ui:latest
       
             # Update Docker Compose and start containers
-            cd ~/skywalking/docker
             docker-compose --profile elasticsearch down
             docker-compose --profile elasticsearch up -d
             
