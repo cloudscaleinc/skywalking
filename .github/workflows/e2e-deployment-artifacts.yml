@@ -18,7 +18,7 @@ name: E2E deployment using CI/CD for SkyWalking
 on:
   push:
     branches:
-      - Keshav-
+      - Keshav-poc
 
 jobs:
   build-and-save:
@@ -74,7 +74,7 @@ jobs:
         docker buildx build \
           --file ./Dockerfile \
           --tag cloudscaleinc/skywalking/oap:${{ env.TAG }} \
-          --output type=docker,dest=./oap-image.tar
+          --output type=docker,dest=./oap-image.tar \
           -- .
 
     - name: Build UI Docker Image
@@ -83,7 +83,7 @@ jobs:
         docker buildx build \
           --file ./Dockerfile \
           --tag cloudscaleinc/skywalking/ui:${{ env.TAG }} \
-          --output type=docker,dest=./ui-image.tar
+          --output type=docker,dest=./ui-image.tar \
           -- .
 
     - name: Upload Docker Images as Artifacts
