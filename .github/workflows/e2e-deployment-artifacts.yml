@@ -66,11 +66,14 @@ jobs:
       run: ls -l dist/apache-skywalking-apm-bin.tar.gz
     
     - name: Copy tarball to the Docker build context
-      run: cp dist/apache-skywalking-apm-bin.tar.gz docker/oap/
+      run: | 
+          cp dist/apache-skywalking-apm-bin.tar.gz docker/oap/
+          cp dist/apache-skywalking-apm-bin.tar.gz docker/ui/
     
     - name: Build OAP Docker Image
       run: |
         cd docker/oap
+        docker buildx create --use --name mybuilder --driver containerd
         docker buildx build \
           --file ./Dockerfile \
           --tag cloudscaleinc/skywalking/oap:${{ env.TAG }} \
@@ -80,6 +83,7 @@ jobs:
     - name: Build UI Docker Image
       run: |
         cd docker/ui
+        docker buildx create --use --name mybuilder --driver containerd
         docker buildx build \
           --file ./Dockerfile \
           --tag cloudscaleinc/skywalking/ui:${{ env.TAG }} \
