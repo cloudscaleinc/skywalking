@@ -59,10 +59,17 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-  
-      - name: Set up versioning
+
+      - name: Set up versioning and ssh
         id: versioning
+        env:
+          host: ${{ secrets.VM_IP }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
         run: |
+          eval $(ssh-agent -s)
+          echo "$key" | base64 --decode | ssh-add -
+          ssh -vvv -o StrictHostKeyChecking=no -t $username@$host << 'EOF'
           cd skywalking
           if [ ! -f version.txt ]; then
             echo "a0.0.0" > version.txt
@@ -89,11 +96,6 @@ jobs:
           echo $NEW_VERSION > version.txt
           echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
-      - name: Commit Updated Version
-        env:
-          key: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
-        run: |
-          cd skywalking
           git config user.name "GitHub Action"
           git config user.email "action@github.com"
           git add version.txt
@@ -206,16 +208,6 @@ jobs:
           name: docker-images-17
           path: docker-images-17/
           
-      - name: Load version from file or initialize
-        run: |
-          if [ -f version.txt ]; then
-            VERSION=$(cat version.txt)
-          # else
-          #   VERSION="a0.0.1"
-          fi
-          echo "$VERSION" > version.txt
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -224,9 +216,20 @@ jobs:
           password: ${{ secrets.GHCR_TOKEN }}
 
       - name: Load and Push Docker Images
+        env:
+          host: ${{ secrets.VM_IP }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
         run: |
-          cd skywalking
-          VERSION=$(cat version.txt)
+         ssh -vvv -o StrictHostKeyChecking=no -t $username@$host << 'EOF'
+            if [ ! -f skywalking/version.txt ]; then
+                echo "a0.0.0" > skywalking/version.txt
+            fi
+            echo "$VERSION" > version.txt
+            echo "VERSION=$VERSION" >> $GITHUB_ENV
+            cd skywalking
+            VERSION=$(cat version.txt)
+            
           # Load Docker images from tar files
           docker load -i docker-images-11/docker-images-skywalking-oap.tar
           docker load -i docker-images-11/docker-images-skywalking-ui.tar
