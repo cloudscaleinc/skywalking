@@ -208,8 +208,16 @@ jobs:
           else
             VERSION="a0.0.0"
           fi
-          echo "$VERSION" > ~/version.txt  # Save version to home directory for later use
-          echo "VERSION=$VERSION" >> $GITHUB_ENV  # Set it as an environment variable for further steps
+          echo "$VERSION" > ~/version.txt
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
       - name: Load and Push Docker Images
         run: |
           docker load -i docker-images-11/docker-images-skywalking-oap.tar
