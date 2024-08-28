@@ -256,6 +256,7 @@ jobs:
           git submodule update --init --recursive
           
           cd ~/skywalking/docker
+          docker-compose --profile elasticsearch down
           # Pull the pre-built Docker images from GitHub Container Registry
           VERSION=$(cat version.txt)
           docker pull ghcr.io/cloudscaleinc}/skywalking/oap:$VERSION
