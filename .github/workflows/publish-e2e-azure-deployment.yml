@@ -201,9 +201,17 @@ jobs:
         with:
           name: docker-images-17
           path: docker-images-17/
+      - name: Load version from file or initialize
+        run: |
+          if [ -f version.txt ]; then
+            VERSION=$(cat version.txt)
+          else
+            VERSION="a0.0.0"
+          fi
+          echo "$VERSION" > ~/version.txt  # Save version to home directory for later use
+          echo "VERSION=$VERSION" >> $GITHUB_ENV  # Set it as an environment variable for further steps
       - name: Load and Push Docker Images
         run: |
-          VERSION=$(cat version.txt)
           docker load -i docker-images-11/docker-images-skywalking-oap.tar
           docker load -i docker-images-11/docker-images-skywalking-ui.tar
           docker tag skywalking/oap:latest ghcr.io/cloudscaleinc/skywalking/oap:$VERSION
