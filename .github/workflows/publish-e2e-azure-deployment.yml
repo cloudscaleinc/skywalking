@@ -201,6 +201,12 @@ jobs:
         with:
           name: docker-images-17
           path: docker-images-17/
+      - name: Download version artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: version-file
+          path: ./
+      
       - name: Load version from file or initialize
         run: |
           if [ -f version.txt ]; then
@@ -208,7 +214,7 @@ jobs:
           else
             VERSION="a0.0.0"
           fi
-          echo "$VERSION" > ~/version.txt
+          echo "$VERSION" > version.txt
           echo "VERSION=$VERSION" >> $GITHUB_ENV
           
       - name: Log in to GitHub Container Registry
