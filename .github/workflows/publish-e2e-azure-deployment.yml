@@ -220,24 +220,21 @@ jobs:
 
       - name: Load and Push Docker Images
         run: |
+          # Load Docker images from tar files
           docker load -i docker-images-11/docker-images-skywalking-oap.tar
           docker load -i docker-images-11/docker-images-skywalking-ui.tar
-      - name: Build and Push OAP Docker Image
-        run: |
-          cd docker/oap
-          docker buildx build \
-            --file ./Dockerfile \
-            --tag ghcr.io/cloudscaleinc/skywalking/oap:${{ env.VERSION }} \
-            --tag ghcr.io/cloudscaleinc/skywalking/oap:latest \
-            --push .
-      - name: Build and Push UI Docker Image
-        run: |
-          cd docker/ui
-          docker buildx build \
-            --file ./Dockerfile \
-            --tag ghcr.io/cloudscaleinc/skywalking/ui:${{ env.VERSION }} \
-            --tag ghcr.io/cloudscaleinc/skywalking/ui:latest \
-            --push .
+          
+          # Tag the images with both version-specific and 'latest' tags
+          docker tag skywalking/oap:latest ghcr.io/cloudscaleinc/skywalking/oap:$VERSION
+          docker tag skywalking/ui:latest ghcr.io/cloudscaleinc/skywalking/ui:$VERSION
+          docker tag skywalking/oap:latest ghcr.io/cloudscaleinc/skywalking/oap:latest
+          docker tag skywalking/ui:latest ghcr.io/cloudscaleinc/skywalking/ui:latest
+          
+          # Push both the version-specific and 'latest' tags
+          docker push ghcr.io/cloudscaleinc/skywalking/oap:$VERSION
+          docker push ghcr.io/cloudscaleinc/skywalking/ui:$VERSION
+          docker push ghcr.io/cloudscaleinc/skywalking/oap:latest
+          docker push ghcr.io/cloudscaleinc/skywalking/ui:latest
 
   deploy:
     needs: [push-docker]
