@@ -22,7 +22,7 @@ on:
       - Keshav-poc
 
 jobs:
-  build-and-push:
+  build-set-up:
     if: github.repository == 'cloudscaleinc/skywalking'
     runs-on: ubuntu-latest
     permissions:
@@ -63,17 +63,15 @@ jobs:
       - name: Set up versioning
         id: versioning
         run: |
-          # Ensure the version.txt file exists, otherwise create it
+          cd skywalking
           if [ ! -f version.txt ]; then
             echo "a0.0.0" > version.txt
           fi
-  
-          # Extract current version
           VERSION=$(cat version.txt)
           MAJOR=$(echo $VERSION | cut -d'.' -f1)
           MINOR=$(echo $VERSION | cut -d'.' -f2)
           PATCH=$(echo $VERSION | cut -d'.' -f3)
-  
+      
           # Increment version logic
           if [ $PATCH -lt 9 ]; then
             PATCH=$((PATCH + 1))
@@ -86,20 +84,26 @@ jobs:
               MAJOR=$(echo $MAJOR | tr "0-9" "1-9a")
             fi
           fi
-  
+      
           NEW_VERSION="$MAJOR.$MINOR.$PATCH"
           echo $NEW_VERSION > version.txt
           echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
 
-
-      - name: Save updated version to artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: version-file
-          path: version.txt
+      - name: Commit Updated Version
+        env:
+          key: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
+        run: |
+          cd skywalking
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git add version.txt
+          git commit -m "Updated version to $NEW_VERSION"
+          eval $(ssh-agent -s)
+          echo "$key" | base64 --decode | ssh-add -
+          git push origin Keshav-poc
 
   changes:
-    needs: [build-and-push]
+    needs: [build-set-up]
     name: Check changes
     runs-on: ubuntu-latest
     outputs:
@@ -201,18 +205,13 @@ jobs:
         with:
           name: docker-images-17
           path: docker-images-17/
-      - name: Download version artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: version-file
-          path: ./
-      
+          
       - name: Load version from file or initialize
         run: |
           if [ -f version.txt ]; then
             VERSION=$(cat version.txt)
-          else
-            VERSION="a0.0.0"
+          # else
+          #   VERSION="a0.0.1"
           fi
           echo "$VERSION" > version.txt
           echo "VERSION=$VERSION" >> $GITHUB_ENV
@@ -226,6 +225,8 @@ jobs:
 
       - name: Load and Push Docker Images
         run: |
+          cd skywalking
+          VERSION=$(cat version.txt)
           # Load Docker images from tar files
           docker load -i docker-images-11/docker-images-skywalking-oap.tar
           docker load -i docker-images-11/docker-images-skywalking-ui.tar
@@ -263,14 +264,12 @@ jobs:
           
           cd ~/skywalking/docker
           docker-compose --profile elasticsearch down
-          # Pull the pre-built Docker images from GitHub Container Registry
           VERSION=$(cat version.txt)
           docker pull ghcr.io/cloudscaleinc}/skywalking/oap:$VERSION
           docker pull ghcr.io/cloudscaleinc/skywalking/ui:$VERSION
   
-          # Update Docker Compose to use the latest OAP and UI images
-          sed -i 's|image: .*oap.*|image: ghcr.io/cloudscaleinc/skywalking/oap:$VERSION|' docker/.env
-          sed -i 's|image: .*ui.*|image: ghcr.io/cloudscaleinc/skywalking/ui:$VERSION|' docker/.env
-  
+          sed -i "s|OAP_IMAGE=.*|OAP_IMAGE=ghcr.io/cloudscaleinc/skywalking/oap:$VERSION|" .env
+          sed -i "s|UI_IMAGE=.*|UI_IMAGE=ghcr.io/cloudscaleinc/skywalking/ui:$VERSION|" .env
+
           docker-compose --profile elasticsearch up -d
         EOF
