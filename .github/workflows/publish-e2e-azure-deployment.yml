@@ -224,6 +224,7 @@ jobs:
           docker load -i docker-images-11/docker-images-skywalking-ui.tar
       - name: Build and Push OAP Docker Image
         run: |
+          cd docker/oap
           docker buildx build \
             --file ./Dockerfile \
             --tag ghcr.io/cloudscaleinc/skywalking/oap:${{ env.VERSION }} \
@@ -231,6 +232,7 @@ jobs:
             --push .
       - name: Build and Push UI Docker Image
         run: |
+          cd docker/ui
           docker buildx build \
             --file ./Dockerfile \
             --tag ghcr.io/cloudscaleinc/skywalking/ui:${{ env.VERSION }} \
