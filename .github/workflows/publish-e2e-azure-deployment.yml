@@ -222,10 +222,20 @@ jobs:
         run: |
           docker load -i docker-images-11/docker-images-skywalking-oap.tar
           docker load -i docker-images-11/docker-images-skywalking-ui.tar
-          docker tag skywalking/oap:latest ghcr.io/cloudscaleinc/skywalking/oap:$VERSION
-          docker tag skywalking/ui:latest ghcr.io/cloudscaleinc/skywalking/ui:$VERSION
-          docker push ghcr.io/cloudscaleinc/skywalking/oap:$VERSION
-          docker push ghcr.io/cloudscaleinc/skywalking/ui:$VERSION
+      - name: Build and Push OAP Docker Image
+        run: |
+          docker buildx build \
+            --file ./Dockerfile \
+            --tag ghcr.io/cloudscaleinc/skywalking/oap:${{ env.VERSION }} \
+            --tag ghcr.io/cloudscaleinc/skywalking/oap:latest \
+            --push .
+      - name: Build and Push UI Docker Image
+        run: |
+          docker buildx build \
+            --file ./Dockerfile \
+            --tag ghcr.io/cloudscaleinc/skywalking/ui:${{ env.VERSION }} \
+            --tag ghcr.io/cloudscaleinc/skywalking/ui:latest \
+            --push .
 
   deploy:
     needs: [push-docker]
