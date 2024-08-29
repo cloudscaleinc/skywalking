@@ -112,7 +112,7 @@ jobs:
       - name: Save updated version to artifact
         uses: actions/upload-artifact@v3
         with:
-          name: version-file
+          name: version-artifact
           path: version.txt
 
   changes:
