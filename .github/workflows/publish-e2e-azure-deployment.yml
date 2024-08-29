@@ -74,9 +74,6 @@ jobs:
           echo "LATEST_TAG=$LATEST_TAG"
           echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
 
-      - name: Debug environment
-        run: env
-
       - name: Generate new version
         id: versioning
         run: |
@@ -112,7 +109,7 @@ jobs:
           echo "${NEW_VERSION}" > version.txt
           
           # Upload the version.txt file as an artifact
-          echo "Uploading version artifact..."
+          name: Uploading version artifact
           uses: actions/upload-artifact@v3
           with:
             name: version-artifact
