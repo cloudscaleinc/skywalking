@@ -107,13 +107,13 @@ jobs:
           NEW_VERSION="${PREFIX}${MAJOR}.${MINOR}.${PATCH}"
           echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
           echo "${NEW_VERSION}" > version.txt
+          echo "Uploading version artifact..."
           
-          # Upload the version.txt file as an artifact
-          name: Uploading version artifact
-          uses: actions/upload-artifact@v3
-          with:
-            name: version-artifact
-            path: version.txt
+      - name: Save updated version to artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: version-file
+          path: version.txt
 
   changes:
     needs: [build-set-up]
