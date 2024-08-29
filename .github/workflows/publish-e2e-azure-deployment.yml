@@ -263,7 +263,7 @@ jobs:
     - name: Download version artifact
       uses: actions/download-artifact@v3
       with:
-        name: version-artifact"
+          name: version-artifact
     - name: SSH into Azure VM and Deploy
       env:
         host: ${{ secrets.VM_IP }}
