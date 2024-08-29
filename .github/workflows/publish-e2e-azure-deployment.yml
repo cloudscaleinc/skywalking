@@ -63,9 +63,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Checkout code
-        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -104,7 +101,7 @@ jobs:
             PATCH=$((PATCH + 1))
           else
             PATCH=0
-            if [ $MINOR -lt 9]; then
+            if [ $MINOR -lt 9 ]; then  # Fixed missing space
               MINOR=$((MINOR + 1))
             else
               MINOR=0
@@ -114,7 +111,9 @@ jobs:
           
           NEW_VERSION="${PREFIX}${MAJOR}.${MINOR}.${PATCH}"
           echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "New Version on remote: $NEW_VERSION"
           echo "New Version on remote: $VERSION"
+          echo "New Version: ${{env.VERSION}}"
 
   changes:
     needs: [build-set-up]
