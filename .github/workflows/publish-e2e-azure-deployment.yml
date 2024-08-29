@@ -22,8 +22,6 @@ on:
       - Keshav-poc
     tags:
       - '!**'
-env:
-  VERSION: a0.0.0
 
 jobs:
   build-set-up:
@@ -111,8 +109,14 @@ jobs:
           
           NEW_VERSION="${PREFIX}${MAJOR}.${MINOR}.${PATCH}"
           echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
-          echo "New Version on remote: $NEW_VERSION"
-          echo "New Version: ${{env.VERSION}}"
+          echo "${NEW_VERSION}" > version.txt
+          
+          # Upload the version.txt file as an artifact
+          echo "Uploading version artifact..."
+          uses: actions/upload-artifact@v3
+          with:
+            name: version-artifact
+            path: version.txt
 
   changes:
     needs: [build-set-up]
@@ -229,11 +233,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GHCR_TOKEN }}
 
+      - name: Download version artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: version-artifact
+
       - name: Load and Push Docker Images
         run: |
-          VERSION=${{ env.VERSION }}
-          echo "Loaded VERSION=$VERSION"
-          echo "Version while pushing the Images: $VERSION"
+          cat version.txt
+          VERSION=$(cat version.txt)
+          echo "New Version: $VERSION"
           # Load Docker images from tar files
           docker load -i docker-images-11/docker-images-skywalking-oap.tar
           docker load -i docker-images-11/docker-images-skywalking-ui.tar
@@ -254,10 +263,10 @@ jobs:
     needs: [push-docker]
     runs-on: ubuntu-latest
     steps:
-    - name: Load version from file
-      run: |
-        VERSION=${{ env.VERSION }}
-        echo "Loaded VERSION=$VERSION"
+    - name: Download version artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: version-artifact"
     - name: SSH into Azure VM and Deploy
       env:
         host: ${{ secrets.VM_IP }}
@@ -271,6 +280,8 @@ jobs:
           # Pull the latest code
           cd ~/skywalking
           git submodule update --init --recursive
+          cat version.txt
+          VERSION=$(cat version.txt)
           echo "Version on remote: $VERSION"
           
           cd ~/skywalking/docker
