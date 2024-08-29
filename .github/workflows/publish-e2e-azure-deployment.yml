@@ -260,9 +260,10 @@ jobs:
           cd ~/skywalking
           git pull origin Keshav-poc
           git submodule update --init --recursive
-          NEW_TAG=$VERSION
-          git tag $NEW_TAG
-          git push origin $NEW_TAG
+          echo "Version on remote: $VERSION"
+          # NEW_TAG=$VERSION
+          # git tag $NEW_TAG
+          # git push origin $NEW_TAG
           
           cd ~/skywalking/docker
           docker-compose --profile elasticsearch down
