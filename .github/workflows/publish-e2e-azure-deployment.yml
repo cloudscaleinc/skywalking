@@ -112,7 +112,6 @@ jobs:
           NEW_VERSION="${PREFIX}${MAJOR}.${MINOR}.${PATCH}"
           echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
           echo "New Version on remote: $NEW_VERSION"
-          echo "New Version on remote: $VERSION"
           echo "New Version: ${{env.VERSION}}"
 
   changes:
