@@ -71,7 +71,7 @@ jobs:
       - name: Generate new version
         id: versioning
         run: |
-          LATEST_TAG=${{ env.LATEST_TAG }}
+          LATEST_TAG=
           if [[ $LATEST_TAG =~ ([a-zA-Z]+)([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
             PREFIX=${BASH_REMATCH[1]}
             MAJOR=${BASH_REMATCH[2]}
@@ -83,29 +83,22 @@ jobs:
             MINOR=0
             PATCH=0
           fi
-
+          
           # Increment the version
           if [ $PATCH -lt 9 ]; then
             PATCH=$((PATCH + 1))
           else
             PATCH=0
-            if [ $MINOR -lt 9 ]; then
+            if [ $MINOR -lt 9]; then
               MINOR=$((MINOR + 1))
             else
               MINOR=0
               MAJOR=$((MAJOR + 1))
             fi
           fi
-
+          
           NEW_VERSION="${PREFIX}${MAJOR}.${MINOR}.${PATCH}"
-          echo $NEW_VERSION" > version.txt
           echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
-
-      - name: Save updated version to artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: version-file
-          path: version.txt
 
   changes:
     needs: [build-set-up]
