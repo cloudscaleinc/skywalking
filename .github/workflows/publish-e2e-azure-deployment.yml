@@ -19,7 +19,7 @@ name: E2E deployment using CI/CD for SkyWalking
 on:
   push:
     branches:
-      - Keshav-poc
+      - cloudscale-master
     tags:
       - '!**'
 
