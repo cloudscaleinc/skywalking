@@ -1,0 +1,295 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: E2E deployment using CI/CD for SkyWalking
+
+on:
+  push:
+    branches:
+      - cloudscale-master
+    tags:
+      - '!**'
+
+jobs:
+  build-set-up:
+    if: github.repository == 'cloudscaleinc/skywalking'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    timeout-minutes: 90
+    env:
+      TAG: ${{ github.sha }}
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GHCR_TOKEN }}
+
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+        
+  determine-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: List all tags
+        run: git tag
+
+      - name: Get latest tag
+        id: get_tag
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "No tags found")
+          echo "LATEST_TAG=$LATEST_TAG"
+          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
+
+      - name: Generate new version
+        id: versioning
+        run: |
+          LATEST_TAG=${{ env.LATEST_TAG }}
+          echo "LATEST_TAG on remote is : $LATEST_TAG"
+          if [[ $LATEST_TAG =~ ([a-zA-Z]+)([0-9]+)\.([0-9]+)\.([0-9]+) ]]; then
+            PREFIX=${BASH_REMATCH[1]}
+            MAJOR=${BASH_REMATCH[2]}
+            MINOR=${BASH_REMATCH[3]}
+            PATCH=${BASH_REMATCH[4]}
+          else
+            PREFIX="a"
+            MAJOR=0
+            MINOR=0
+            PATCH=0
+          fi
+          
+          # Increment the version
+          if [ $PATCH -lt 9 ]; then
+            PATCH=$((PATCH + 1))
+          else
+            PATCH=0
+            if [ $MINOR -lt 9 ]; then  # Fixed missing space
+              MINOR=$((MINOR + 1))
+            else
+              MINOR=0
+              MAJOR=$((MAJOR + 1))
+            fi
+          fi
+          
+          NEW_VERSION="${PREFIX}${MAJOR}.${MINOR}.${PATCH}"
+          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "${NEW_VERSION}" > version.txt
+          echo "Uploading version artifact..."
+          
+      - name: Save updated version to artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: version-artifact
+          path: version.txt
+
+  changes:
+    needs: [build-set-up]
+    name: Check changes
+    runs-on: ubuntu-latest
+    outputs:
+      oap: ${{ steps.filter-oap.outputs.any_modified }}
+      pom: ${{ steps.filter-pom.outputs.any_modified }}
+      ui: ${{ steps.filter-ui.outputs.any_modified }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Filter OAP
+        id: filter-oap
+        uses: tj-actions/changed-files@v43.0.0
+        with:
+          files: |
+            **/oap/**
+      - name: Filter POM
+        id: filter-pom
+        uses: tj-actions/changed-files@v43.0.0
+        with:
+          files: |
+            **/pom.xml
+      - name: Filter UI
+        id: filter-ui
+        uses: tj-actions/changed-files@v43.0.0
+        with:
+          files: |
+            skywalking-ui/**
+
+  dist-tar:
+    name: Build dist tar
+    needs: [changes]
+    runs-on: ubuntu-latest
+    # if: needs.changes.outputs.oap == 'true'
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: "11"
+          cache: "maven"
+      - name: Build distribution tar
+        run: |
+          ./mvnw clean install javadoc:javadoc -B -q -Pall -Dmaven.test.skip -Dcheckstyle.skip
+      - name: Upload distribution tar
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist
+
+  docker:
+    name: Docker images
+    needs: [dist-tar]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java-version: [11, 17]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - uses: actions/download-artifact@v3
+        name: Download distribution tar
+        with:
+          name: dist
+          path: dist
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java-version }}
+      - name: Build and save docker images
+        env:
+          SW_OAP_BASE_IMAGE: eclipse-temurin:${{ matrix.java-version }}-jre
+        run: |
+          make docker.all || make docker.all
+          docker save -o docker-images-skywalking-oap.tar skywalking/oap:latest
+          docker save -o docker-images-skywalking-ui.tar skywalking/ui:latest
+      - name: Upload docker images as artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: docker-images-${{ matrix.java-version }}
+          path: docker-images-skywalking-*.tar
+
+  push-docker:
+    name: Push Docker Images to GHCR
+    needs: [docker,determine-version]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - uses: actions/download-artifact@v3
+        name: Download docker images (OAP)
+        with:
+          name: docker-images-11
+          path: docker-images-11/
+          
+      - uses: actions/download-artifact@v3
+        name: Download docker images (UI)
+        with:
+          name: docker-images-17
+          path: docker-images-17/
+          
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Download version artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: version-artifact
+
+      - name: Load and Push Docker Images
+        run: |
+          cat version.txt
+          VERSION=$(cat version.txt)
+          echo "New Version: $VERSION"
+          # Load Docker images from tar files
+          docker load -i docker-images-11/docker-images-skywalking-oap.tar
+          docker load -i docker-images-11/docker-images-skywalking-ui.tar
+          
+          # Tag the images with both version-specific and 'latest' tags
+          docker tag skywalking/oap:latest ghcr.io/cloudscaleinc/skywalking/oap:$VERSION
+          docker tag skywalking/ui:latest ghcr.io/cloudscaleinc/skywalking/ui:$VERSION
+          docker tag skywalking/oap:latest ghcr.io/cloudscaleinc/skywalking/oap:latest
+          docker tag skywalking/ui:latest ghcr.io/cloudscaleinc/skywalking/ui:latest
+          
+          # Push both the version-specific and 'latest' tags
+          docker push ghcr.io/cloudscaleinc/skywalking/oap:$VERSION
+          docker push ghcr.io/cloudscaleinc/skywalking/ui:$VERSION
+          docker push ghcr.io/cloudscaleinc/skywalking/oap:latest
+          docker push ghcr.io/cloudscaleinc/skywalking/ui:latest
+
+  deploy:
+    needs: [push-docker]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download version artifact
+      uses: actions/download-artifact@v3
+      with:
+          name: version-artifact
+    - name: SSH into Azure VM and Deploy
+      env:
+        host: ${{ secrets.VM_IP }}
+        username: ${{ secrets.VM_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY_BASE64 }}
+      run: |
+        cat version.txt
+        VERSION=$(cat version.txt)
+        echo "New Version: $VERSION"
+        eval $(ssh-agent -s)
+        echo "$key" | base64 --decode | ssh-add -
+        
+        ssh -vvv -o StrictHostKeyChecking=no -t $username@$host VERSION=$VERSION << 'EOF'
+          # Pull the latest code
+          cd ~/skywalking
+          git submodule update --init --recursive
+          echo "Version on remote: $VERSION"
+          
+          cd ~/skywalking/docker
+          docker-compose --profile elasticsearch down
+          docker pull ghcr.io/cloudscaleinc}/skywalking/oap:$VERSION
+          docker pull ghcr.io/cloudscaleinc/skywalking/ui:$VERSION
+
+          echo "Version on remote before version change: $VERSION"
+          sed -i "s|OAP_IMAGE=.*|OAP_IMAGE=ghcr.io/cloudscaleinc/skywalking/oap:$VERSION|" .env
+          sed -i "s|UI_IMAGE=.*|UI_IMAGE=ghcr.io/cloudscaleinc/skywalking/ui:$VERSION|" .env
+
+          docker-compose --profile elasticsearch up -d
+        EOF
